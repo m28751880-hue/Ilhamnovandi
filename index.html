@@ -168,6 +168,7 @@ body{font-size:13px}
   const intervalSeconds = i => ({'1m':60,'3m':180,'5m':300,'15m':900,'30m':1800,'1h':3600,'2h':7200,'4h':14400,'6h':21600,'8h':28800,'12h':43200,'1d':86400})[i]||900;
   const state = {symbol:'BTCUSDT', interval:'15m', confirmedSide:'WAIT', lastClosedTime:0, price:0, high:0, low:0, vol:0, candles:[], ema20:[], position:null, paper:true, lastTicker:null, ws:null, scannerTimer:null, earlyScore:0, earlySide:'WAIT', lastEarlyCandle:0, earlyEntryUsed:false, cooldownUntil:0, journal:[], dailyLoss:0, consecutiveLoss:0, bid:0, ask:0, mark:0, lastTrade:0, wsLastAt:0, userWs:null, userListenKey:null, account:null};
   let currentData = [];
+  let lastRelayOk = false;
   let emaData = [];
   const chartHost = $('chart');
   const canvas = document.createElement('canvas');
@@ -434,7 +435,7 @@ body{font-size:13px}
   function updateHeader(t){
     const last=Number(t.lastPrice||state.price||0);
     setText('pairLabel',state.symbol);
-    setText('chartPair',state.symbol+' · '+state.interval+' · BINANCE LIVE · v8.9.5');
+    setText('chartPair',state.symbol+' · '+state.interval+' · BINANCE LIVE · v8.9.6');
     setText('topPrice',fmtIDR(last*16000));
     setText('topChange',(Number(t.priceChangePercent||0)>=0?'+':'')+Number(t.priceChangePercent||0).toFixed(2)+'%');
     setText('high24',fmtIDR(Number(t.highPrice||state.high||0)*16000));
@@ -501,7 +502,8 @@ body{font-size:13px}
       const px=Number(d.price?.price||d.ticker?.lastPrice||k?.[4]);
       if(k)applyLiveRelayTick(px,k); else applyLiveRelayTick(px,null);
       if(d.ticker)updateHeader(d.ticker);
-      setLiveStatus(realtimeConnected?'DATA':'RELAY',true);
+      lastRelayOk=true;
+      setLiveStatus('RELAY · DATA',true);
       update15mCountdown(currentData.at(-1)?.time||Math.floor(Date.now()/1000));
       if(k){
         const kt=Number(k[0])/1000;
@@ -511,8 +513,9 @@ body{font-size:13px}
         }
       }
     }catch(e){
+      lastRelayOk=false;
       console.warn('Binance live relay:',e.message);
-      if(!realtimeConnected){setLiveStatus('RECONNECTING',false);}
+      if(!realtimeConnected){setLiveStatus('RELAY ERROR',false);}
     }
   }
 
@@ -531,7 +534,7 @@ body{font-size:13px}
 
   function startPolling(){
     if(pollTimer)clearInterval(pollTimer);
-    pollTimer=setInterval(pollMarket,5000);
+    pollTimer=setInterval(pollMarket,15000);
     pollMarket();
   }
   function startLiveRelay(){
@@ -601,16 +604,16 @@ body{font-size:13px}
       };
       ws.onerror=()=>{
         if(generation!==state.wsGeneration)return;
-        realtimeConnected=false; setLiveStatus('RECONNECTING',false);
+        realtimeConnected=false; if(!lastRelayOk) setLiveStatus('RELAY',false);
       };
       ws.onclose=()=>{
         if(generation!==state.wsGeneration)return;
         realtimeConnected=false; state.ws=null;
-        setLiveStatus('RECONNECTING',false);
+        if(!lastRelayOk) setLiveStatus('RELAY',false);
         setTimeout(()=>{if(generation===state.wsGeneration)wsConnect()},1500);
       };
     }catch(err){
-      realtimeConnected=false; setLiveStatus('RECONNECTING',false);
+      realtimeConnected=false; if(!lastRelayOk) setLiveStatus('RELAY',false);
       setTimeout(()=>{if(generation===state.wsGeneration)wsConnect()},1500);
     }
     // REST ticker is a safety net only; it never changes the LIVE status.
@@ -620,7 +623,7 @@ body{font-size:13px}
     state.wsWatchdog=setInterval(()=>{
       if(generation!==state.wsGeneration){clearInterval(state.wsWatchdog);return}
       if(state.ws && realtimeConnected && lastMessageAt && Date.now()-lastMessageAt>7000){
-        realtimeConnected=false; setLiveStatus('RECONNECTING',false);
+        realtimeConnected=false; if(!lastRelayOk) setLiveStatus('RELAY',false);
         try{state.ws.close()}catch{}
       }
     },2000);
@@ -643,8 +646,8 @@ body{font-size:13px}
     for(let i=22;i<data.length-1;i++){const x=earlyScoreFor(data.slice(0,i+1)); if(x.score<70||x.side==='WAIT'||x.rr<1.5)continue; const e=data[i].close, dir=x.side==='BUY'?1:-1, sl=x.slDist, tp=x.tpDist; let out=0; for(let j=i+1;j<data.length;j++){const c=data[j];if(dir>0&&c.low<=e-sl){out=-1;break}if(dir<0&&c.high>=e+sl){out=-1;break}if(dir>0&&c.high>=e+tp){out=x.rr;break}if(dir<0&&c.low<=e-tp){out=x.rr;break}} if(!out)continue; pnl+=out; peak=Math.max(peak,pnl); maxDD=Math.max(maxDD,peak-pnl); if(out>0){wins++;streak=0}else{losses++;streak++;maxStreak=Math.max(maxStreak,streak)}}
     const total=wins+losses, wr=total?wins/total*100:0, pf=losses?((pnl+losses)/losses):0; $('backtestResult').innerHTML='<b>'+total+' trades</b> · Win rate <b>'+wr.toFixed(1)+'%</b> · Net R <b>'+pnl.toFixed(2)+'</b><br>Profit Factor <b>'+pf.toFixed(2)+'</b> · Max DD <b>'+maxDD.toFixed(2)+'R</b> · Max Consecutive Loss <b>'+maxStreak+'</b>'; toast('Backtest 15M selesai');
   }
-  async function switchSymbol(symbol,auto=false){state.symbol=symbol;$('pairLabel').textContent=symbol;await loadSymbol(symbol);wsConnect();toast((auto?'Paper Engine auto-switch → ':'Pair → ')+symbol)}
-  document.querySelectorAll('.tf button').forEach(b=>b.onclick=async()=>{const iv=b.dataset.interval||b.textContent.toLowerCase();document.querySelectorAll('.tf button').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.interval=iv;await loadSymbol();wsConnect();$('tfLive').textContent=iv.toUpperCase()+' LIVE';toast('Timeframe '+iv.toUpperCase()+' · Binance Futures realtime')});
+  async function switchSymbol(symbol,auto=false){state.symbol=symbol;$('pairLabel').textContent=symbol;await loadSymbol(symbol);startLiveRelay();toast((auto?'Paper Engine auto-switch → ':'Pair → ')+symbol)}
+  document.querySelectorAll('.tf button').forEach(b=>b.onclick=async()=>{const iv=b.dataset.interval||b.textContent.toLowerCase();document.querySelectorAll('.tf button').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.interval=iv;await loadSymbol();startLiveRelay();$('tfLive').textContent=iv.toUpperCase()+' LIVE';toast('Timeframe '+iv.toUpperCase()+' · Binance Futures realtime')});
 $('panicBtn').onclick=closePosition;$('closePopup').onclick=()=>$('candlePopup').classList.remove('show');$('candleBtn').onclick=()=>$('candlePopup').classList.toggle('show');['fibBtn','trendBtn','srBtn','emaBtn','superBtn'].forEach(id=>$(id).onclick=()=>{$(id).classList.toggle('active');if(id==='emaBtn')emaSeries.applyOptions({visible:$(id).classList.contains('active')});if(id==='srBtn')renderSR();else renderOverlay()});$('paperBtn').onclick=()=>{state.paper=!state.paper;$('paperBtn').textContent='Paper Engine: '+(state.paper?'ON':'OFF');toast('Paper Engine '+(state.paper?'aktif':'nonaktif'))};$('modalClose').onclick=()=>$('modal').classList.remove('show');
   async function backend(path, options={}){
     const r=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});
@@ -701,7 +704,9 @@ $('panicBtn').onclick=closePosition;$('closePopup').onclick=()=>$('candlePopup')
   // Binance Futures WebSocket is started independently of historical REST/archive.
   // This is critical when Binance REST returns HTTP 451 in the deployment region.
   startLiveRelay();
-  wsConnect();
+  // Market chart uses the Vercel Binance relay as the authoritative live path.
+  // Direct browser WebSocket is intentionally not started: some mobile/browser
+  // networks reject Binance Futures WSS and leave the UI stuck on RECONNECTING.
   connectUserStream();
   loadSymbol().then(()=>{if(lastWsCandle) applyRealtimeCandle(lastWsCandle,false); scanner();setInterval(scanner,30000);setInterval(()=>{if(document.visibilityState==='visible')refreshAccount()},10000)}).catch(e=>console.warn('Initial market load:',e.message));
 })();

@@ -32,5 +32,8 @@
       "source": "/api/binance-history",
       "destination": "/api/binance-history.js"
     }
+  ],
+  "regions": [
+    "sin1"
   ]
 }

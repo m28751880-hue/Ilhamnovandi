@@ -16,3 +16,7 @@ The chart updates the current candle from Binance WebSocket events without waiti
 for Vercel or Neon. If the socket becomes stale, the browser reconnects automatically.
 REST is only a fallback. Neon receives throttled candle snapshots and every closed
 candle, so the database is not used as the realtime transport.
+
+
+## V8.9.6
+The chart no longer depends on browser-to-Binance WebSocket. Vercel fetches Binance Futures live price + current kline and the browser refreshes it every second. This avoids the mobile/browser WSS reconnect loop. The server tries fapi.binance.com plus fapi1-fapi4 and the function region is Singapore (sin1).

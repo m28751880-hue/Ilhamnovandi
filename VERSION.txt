@@ -1,7 +1,8 @@
-V8.9.5
-Binance Live stability fix
-- Throttled high-frequency aggTrade rendering to prevent mobile browser UI freeze
-- LIVE badge now reflects actual received market data, not socket open state
-- 1-second Binance relay uses cache-busting and no-store headers
-- Direct Futures WebSocket remains primary; relay remains fallback
-- Visible build/version marker changed so deployed build can be verified
+V8.9.6 Binance Live Relay Total Fix
+
+- Binance market relay is authoritative for the chart.
+- Browser no longer gets stuck on RECONNECTING because of a blocked Binance WSS connection.
+- Vercel relay tries every configured Binance Futures REST endpoint instead of stopping on HTTP 451.
+- Function region is pinned to Singapore (sin1) to avoid restricted-location market API responses.
+- Chart polls the live candle/price every 1 second with no-cache and updates the current candle immediately.
+- Direct browser WebSocket code remains available but is not auto-started for the market chart.
