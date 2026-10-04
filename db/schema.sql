@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS candles (
+  symbol TEXT NOT NULL,
+  interval TEXT NOT NULL,
+  time BIGINT NOT NULL,
+  open DOUBLE PRECISION NOT NULL,
+  high DOUBLE PRECISION NOT NULL,
+  low DOUBLE PRECISION NOT NULL,
+  close DOUBLE PRECISION NOT NULL,
+  volume DOUBLE PRECISION NOT NULL,
+  closed BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (symbol, interval, time)
+);
+CREATE INDEX IF NOT EXISTS candles_lookup_idx ON candles (symbol, interval, time DESC);
