@@ -1,6 +1,7 @@
-V8.9.4
-Binance Live Relay + Direct WebSocket fallback
-- Browser polls a Vercel Binance relay every 1 second
-- Direct Binance Futures combined WebSocket remains primary
-- Current 15M candle moves with live Binance price
-- Auto reconnect and REST recovery
+V8.9.5
+Binance Live stability fix
+- Throttled high-frequency aggTrade rendering to prevent mobile browser UI freeze
+- LIVE badge now reflects actual received market data, not socket open state
+- 1-second Binance relay uses cache-busting and no-store headers
+- Direct Futures WebSocket remains primary; relay remains fallback
+- Visible build/version marker changed so deployed build can be verified

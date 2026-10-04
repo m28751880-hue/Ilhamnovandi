@@ -99,7 +99,7 @@ body{font-size:13px}
 
 
 
-/* ===== v8.9.1 MOBILE SINGLE TRADE BAR ===== */
+/* ===== v8.9.5 MOBILE SINGLE TRADE BAR ===== */
 @media (pointer: coarse){
   .positions{grid-template-rows:42px 135px 150px;min-height:327px;overflow:visible}
   .ordergrid{grid-template-columns:1fr 1fr!important;align-items:stretch}
@@ -119,13 +119,13 @@ body{font-size:13px}
     <nav class="nav">
       <a class="active" href="#"><i>⌂</i>Dashboard</a><a href="#scanner"><i>⌁</i>Trading</a><a href="#scanner"><i>◉</i>Market</a><a href="#signals"><i>✦</i>AI Signals</a><a href="#education"><i>◫</i>Candle Learning</a><a href="#history"><i>◷</i>Riwayat</a><a href="#settings"><i>⚙</i>Pengaturan</a>
     </nav>
-    <div class="promo"><div class="gem">♦</div><strong>ILHAM NOVANDI</strong><span>Trade Smarter With AI</span></div><div class="version"><span>v8.9.1 UI</span><span class="ticker"><i class="dot"></i> Online</span></div>
+    <div class="promo"><div class="gem">♦</div><strong>ILHAM NOVANDI</strong><span>Trade Smarter With AI</span></div><div class="version"><span>v8.9.5 UI</span><span class="ticker"><i class="dot"></i> Online</span></div>
   </aside>
   <header class="top">
     <div class="pairbox"><div class="coin">₿</div><div><div class="pair" id="pairLabel">BTCUSDT</div><div class="sub">Perpetual · Binance</div></div><span style="margin-left:auto">⌄</span></div>
     <div class="price" id="topPrice">Rp 0</div><div class="change" id="topChange">+0.00%</div>
     <div class="stats"><div class="stat"><span>24h High</span><b id="high24">-</b></div><div class="stat"><span>24h Low</span><b id="low24">-</b></div><div class="stat"><span>24h Vol</span><b id="vol24">-</b></div></div>
-    <div class="top-actions"><span class="live">● LIVE</span><button class="iconbtn" title="Scanner">▥</button><button class="iconbtn">♧</button><button class="iconbtn">⚙</button><button class="iconbtn" id="accountBtn" title="Akun Binance">●</button></div>
+    <div class="top-actions"><span class="live" id="topLiveStatus">● CONNECTING</span><button class="iconbtn" title="Scanner">▥</button><button class="iconbtn">♧</button><button class="iconbtn">⚙</button><button class="iconbtn" id="accountBtn" title="Akun Binance">●</button></div>
   </header>
   <main class="main">
     <div class="toolbar"><div class="tf"><button data-interval="1m">1m</button><button data-interval="5m">5m</button><button class="active" data-interval="15m">15m</button><button data-interval="30m">30m</button><button data-interval="1h">1h</button><button data-interval="4h">4h</button><button data-interval="1d">1D</button></div><span class="tf-focus">15M FOCUS · CONFIRMED CLOSE</span><button class="toolbtn" id="candleBtn">◐</button><button class="toolbtn accent" id="superBtn">Supertrend (B/S)</button><button class="toolbtn" id="trendBtn">Trendline</button><button class="toolbtn" id="fibBtn">Fib</button><button class="toolbtn" id="srBtn">Auto S/R</button><button class="toolbtn" id="emaBtn">EMA 20</button><button class="toolbtn" id="paperBtn">Paper Engine: ON</button></div>
@@ -219,13 +219,16 @@ body{font-size:13px}
     }
     const last=data[data.length-1],lastY=y(last.close);ctx.setLineDash([4,4]);ctx.strokeStyle='#20d7ff55';ctx.beginPath();ctx.moveTo(pad.l,lastY);ctx.lineTo(pad.l+cw,lastY);ctx.stroke();ctx.setLineDash([]);
     ctx.fillStyle='#9eb4c8';ctx.font='10px system-ui';ctx.textAlign='left';for(let i=0;i<=5;i++){const v=max-i*(max-min)/5;ctx.fillText(v.toFixed(v>100?0:2),8,pad.t+i*ch/5+3);}
-    ctx.fillStyle='#6f8399';ctx.fillText('15M · '+data.length+' candles · Binance Futures',pad.l,16);ctx.textAlign='right';ctx.fillStyle='#aab8c6';ctx.fillText('LIVE',w-8,18);
+    ctx.fillStyle='#6f8399';ctx.fillText(state.interval.toUpperCase()+' · '+data.length+' candles · BINANCE LIVE v8.9.5',pad.l,16);ctx.textAlign='right';ctx.fillStyle='#aab8c6';ctx.fillText('LIVE',w-8,18);
   }
   const chart={applyOptions:()=>resizeChartCanvas(),timeScale:()=>({fitContent:()=>drawChart()})};
   const candleSeries={setData:d=>{currentData=d||[];drawChart()},update:c=>{const i=currentData.findIndex(x=>x.time===c.time);if(i>=0)currentData[i]=c;else currentData.push(c);if(currentData.length>260)currentData.shift();drawChart()}};
   const emaSeries={setData:d=>{emaData=(d||[]).map(x=>x.value);drawChart()},update:x=>{if(emaData.length)emaData[emaData.length-1]=x.value;drawChart()}};
   resizeChartCanvas();
   const toast = msg => { $('toast').textContent=msg; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'),2200); };
+  let liveRenderTimer=0, liveRenderPending=null;
+  function setLiveStatus(status, ok=false){ const text=ok?'● LIVE · '+status:'● '+status; const top=$('topLiveStatus'); if(top){top.textContent=text;top.style.color=ok?'#00df93':'#f0b63f'} const b=$('liveSync'); if(b){b.textContent=ok?'LIVE · '+status:status;b.className='sync-badge '+(ok?'ok':'bad')} }
+  function scheduleLiveRender(c){ liveRenderPending=c; if(liveRenderTimer)return; liveRenderTimer=setTimeout(()=>{liveRenderTimer=0; const x=liveRenderPending; liveRenderPending=null; if(x){ candleSeries.setData(currentData); state.ema20=calcEMA(currentData.map(v=>v.close)); emaSeries.setData(currentData.map((v,i)=>({time:v.time,value:state.ema20[i]}))); analyze(); renderSR(); } },100); }
   let binanceConfig=null;
   const getBinanceConfig = async () => {
     if(binanceConfig) return binanceConfig;
@@ -431,7 +434,7 @@ body{font-size:13px}
   function updateHeader(t){
     const last=Number(t.lastPrice||state.price||0);
     setText('pairLabel',state.symbol);
-    setText('chartPair',state.symbol+' · '+state.interval+' · Binance Futures → Neon · v8.9.1');
+    setText('chartPair',state.symbol+' · '+state.interval+' · BINANCE LIVE · v8.9.5');
     setText('topPrice',fmtIDR(last*16000));
     setText('topChange',(Number(t.priceChangePercent||0)>=0?'+':'')+Number(t.priceChangePercent||0).toFixed(2)+'%');
     setText('high24',fmtIDR(Number(t.highPrice||state.high||0)*16000));
@@ -491,15 +494,14 @@ body{font-size:13px}
   async function pollLiveRelay(){
     try{
       const q='symbol='+encodeURIComponent(state.symbol)+'&interval='+encodeURIComponent(state.interval||'15m');
-      const r=await fetch('/api/binance?action=live&'+q,{cache:'no-store'});
+      const r=await fetch('/api/binance?action=live&'+q+'&_='+Date.now(),{cache:'no-store'});
       const d=await r.json().catch(()=>({}));
       if(!r.ok||!d.ok)throw new Error(d.error||('live relay HTTP '+r.status));
       const k=Array.isArray(d.klines)?d.klines.at(-1):null;
       const px=Number(d.price?.price||d.ticker?.lastPrice||k?.[4]);
       if(k)applyLiveRelayTick(px,k); else applyLiveRelayTick(px,null);
       if(d.ticker)updateHeader(d.ticker);
-      setText('liveSync',realtimeConnected?'LIVE':'LIVE · RELAY');
-      setClass('liveSync','sync-badge ok');
+      setLiveStatus(realtimeConnected?'DATA':'RELAY',true);
       update15mCountdown(currentData.at(-1)?.time||Math.floor(Date.now()/1000));
       if(k){
         const kt=Number(k[0])/1000;
@@ -510,7 +512,7 @@ body{font-size:13px}
       }
     }catch(e){
       console.warn('Binance live relay:',e.message);
-      if(!realtimeConnected){setText('liveSync','RECONNECTING');setClass('liveSync','sync-badge bad');}
+      if(!realtimeConnected){setLiveStatus('RECONNECTING',false);}
     }
   }
 
@@ -533,6 +535,7 @@ body{font-size:13px}
     pollMarket();
   }
   function startLiveRelay(){
+    setLiveStatus('CONNECTING',false);
     if(liveRelayTimer)clearInterval(liveRelayTimer);
     pollLiveRelay();
     liveRelayTimer=setInterval(pollLiveRelay,1000);
@@ -555,9 +558,9 @@ body{font-size:13px}
       const ws=new WebSocket(url); state.ws=ws;
       ws.onopen=()=>{
         if(generation!==state.wsGeneration){try{ws.close()}catch{};return}
-        openedAt=Date.now(); lastMessageAt=Date.now(); realtimeConnected=true;
-        $('liveSync').textContent='LIVE'; $('liveSync').className='sync-badge ok';
-        toast('BINANCE LIVE · '+state.symbol+' '+interval);
+        openedAt=Date.now(); lastMessageAt=Date.now(); realtimeConnected=false;
+        setLiveStatus('CONNECTED · WAITING DATA',false);
+        toast('BINANCE SOCKET CONNECTED · waiting for tick');
       };
       ws.onmessage=e=>{
         if(generation!==state.wsGeneration)return;
@@ -572,36 +575,42 @@ body{font-size:13px}
               saveLiveCandleThrottled(c,c.closed);
             }
           } else if(m.e==='aggTrade'){
-            // aggTrade is used only to make the current candle visually tick
-            // with trades. The official kline stream remains authoritative.
+            // High-frequency trade stream: update memory immediately, but throttle
+            // canvas/indicator redraws so the phone browser never gets flooded.
             const price=Number(m.p), qty=Number(m.q||0);
             const cur=currentData.at(-1);
             if(Number.isFinite(price) && cur){
-              const live={...cur,close:price,high:Math.max(cur.high,price),low:Math.min(cur.low,price),volume:Number.isFinite(qty)?Math.max(cur.volume,cur.volume+qty):cur.volume,closed:false};
-              applyRealtimeCandle(live,false);
+              cur.close=price;
+              cur.high=Math.max(Number(cur.high),price);
+              cur.low=Math.min(Number(cur.low),price);
+              if(Number.isFinite(qty)) cur.volume=Number(cur.volume||0)+qty;
+              cur.closed=false;
+              state.price=price; state.lastTrade=price; state.wsLastAt=Date.now(); lastKlineAt=Date.now();
+              setText('topPrice',fmtIDR(price*16000)); setText('posNow',fmtIDR(price*16000)); setText('posCurrent',fmtIDR(price*16000)); setText('orderPrice',fmtIDR(price*16000)); setText('liveLast',fmtPx(price));
+              setLiveStatus('TRADE',true);
+              scheduleLiveRender(cur);
             }
-            state.lastTrade=price;
           } else if(m.e==='bookTicker'){
             state.bid=Number(m.b); state.ask=Number(m.a);
             setText('liveBid',fmtPx(state.bid)); setText('liveAsk',fmtPx(state.ask));
           } else if(m.e==='markPriceUpdate'){
             state.mark=Number(m.p); setText('liveMark',fmtPx(state.mark));
           }
-          $('liveSync').textContent='LIVE'; $('liveSync').className='sync-badge ok';
+          setLiveStatus('DATA',true);
         }catch(err){console.warn('Binance WS parse:',err.message)}
       };
       ws.onerror=()=>{
         if(generation!==state.wsGeneration)return;
-        realtimeConnected=false; $('liveSync').textContent='RECONNECTING'; $('liveSync').className='sync-badge bad';
+        realtimeConnected=false; setLiveStatus('RECONNECTING',false);
       };
       ws.onclose=()=>{
         if(generation!==state.wsGeneration)return;
         realtimeConnected=false; state.ws=null;
-        $('liveSync').textContent='RECONNECTING'; $('liveSync').className='sync-badge bad';
+        setLiveStatus('RECONNECTING',false);
         setTimeout(()=>{if(generation===state.wsGeneration)wsConnect()},1500);
       };
     }catch(err){
-      realtimeConnected=false; $('liveSync').textContent='RECONNECTING'; $('liveSync').className='sync-badge bad';
+      realtimeConnected=false; setLiveStatus('RECONNECTING',false);
       setTimeout(()=>{if(generation===state.wsGeneration)wsConnect()},1500);
     }
     // REST ticker is a safety net only; it never changes the LIVE status.
@@ -611,7 +620,7 @@ body{font-size:13px}
     state.wsWatchdog=setInterval(()=>{
       if(generation!==state.wsGeneration){clearInterval(state.wsWatchdog);return}
       if(state.ws && realtimeConnected && lastMessageAt && Date.now()-lastMessageAt>7000){
-        realtimeConnected=false; $('liveSync').textContent='RECONNECTING'; $('liveSync').className='sync-badge bad';
+        realtimeConnected=false; setLiveStatus('RECONNECTING',false);
         try{state.ws.close()}catch{}
       }
     },2000);
