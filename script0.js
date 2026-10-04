@@ -93,6 +93,34 @@
       });
     } catch(e) { console.warn('Neon candle save failed:',e.message); }
   };
+
+  // Do not write every 250ms WebSocket event to Neon. Binance remains the
+  // realtime source for the browser; Neon is only the durable history cache.
+  const saveLiveCandleThrottled = (c, force=false) => {
+    const now=Date.now();
+    if(!force && now-neonSaveAt<NEON_TICK_SAVE_MS)return;
+    neonSaveAt=now;
+    saveNeonCandles(state.symbol,state.interval,[c]);
+  };
+
+  function setRealtimeStatus(live, detail=''){
+    realtimeConnected=!!live;
+    const el=document.querySelector('.live');
+    if(el){
+      el.textContent=live?'● LIVE':'● RECONNECTING';
+      el.title=detail || (live?'Binance Futures WebSocket connected':'Waiting for Binance Futures WebSocket');
+      el.style.opacity=live?'1':'.75';
+    }
+  }
+
+  function buildBinanceWsUrl(baseUrl, stream){
+    const raw=String(baseUrl||'wss://fstream.binance.com').trim().replace(/\/+$/,'');
+    // Binance USDⓈ-M Futures WebSocket stream is /ws/<stream>. Older ZIP
+    // versions incorrectly produced /market/ws/<stream>.
+    let origin=raw.replace(/\/market$/i,'').replace(/\/public$/i,'').replace(/\/private$/i,'');
+    if(!/^wss?:\/\//i.test(origin)) origin='wss://fstream.binance.com';
+    return origin+'/ws/'+stream;
+  }
   const normalizeKlines = (rows, limit=260) => {
     const map=new Map();
     for(const k of (rows||[])){
@@ -160,6 +188,9 @@
   };
   const market24 = async (symbol='BTCUSDT') => { const r=await fetch('/api/binance?action=market24&symbol='+encodeURIComponent(symbol),{cache:'no-store'}); const data=await r.json().catch(()=>({error:'Ticker response tidak valid'})); if(!r.ok || !data.ok) throw new Error(data.error||'Ticker proxy error'); return data.ticker || data; };
   let pollTimer=null, realtimeConnected=false, lastWsCandle=null;
+  let wsReconnectTimer=null, wsGeneration=0, wsBackoffMs=1000, lastWsEventAt=0, neonSaveAt=0;
+  const WS_STALE_MS=7000;
+  const NEON_TICK_SAVE_MS=5000;
   const calcEMA=(arr,p=20)=>{let k=2/(p+1),e=arr[0]||0;return arr.map((v,i)=>{if(i===0)e=v;else e=v*k+e*(1-k);return e})};
   function earlyScoreFor(data){
     if(!data || data.length<22) return {score:0,side:'WAIT',momentum:0,volume:0,structure:'WAIT',breakout:'WAIT',risk:0,rr:0,ema:0};
@@ -264,7 +295,7 @@
       console.warn('loadSymbol failed:',e);
     }
   }
-  function updateHeader(t){const last=Number(t.lastPrice||state.price||0);$('pairLabel').textContent=state.symbol;$('chartPair').textContent=state.symbol+' · '+state.interval+' · Binance Futures → Neon · v8.7.1';$('topPrice').textContent=fmtIDR(last*16000);$('topChange').textContent=(+t.priceChangePercent>=0?'+':'')+Number(t.priceChangePercent||0).toFixed(2)+'%';$('high24').textContent=fmtIDR(Number(t.highPrice||state.high||0)*16000);$('low24').textContent=fmtIDR(Number(t.lowPrice||state.low||0)*16000);$('vol24').textContent=Number(t.volume||state.vol||0).toFixed(0)+' '+state.symbol.replace('USDT','');$('orderPrice').textContent=fmtIDR(last*16000);$('posNow').textContent=fmtIDR(last*16000);$('posCurrent').textContent=fmtIDR(last*16000)}
+  function updateHeader(t){const last=Number(t.lastPrice||state.price||0);$('pairLabel').textContent=state.symbol;$('chartPair').textContent=state.symbol+' · '+state.interval+' · Binance Futures · LIVE';$('topPrice').textContent=fmtIDR(last*16000);$('topChange').textContent=(+t.priceChangePercent>=0?'+':'')+Number(t.priceChangePercent||0).toFixed(2)+'%';$('high24').textContent=fmtIDR(Number(t.highPrice||state.high||0)*16000);$('low24').textContent=fmtIDR(Number(t.lowPrice||state.low||0)*16000);$('vol24').textContent=Number(t.volume||state.vol||0).toFixed(0)+' '+state.symbol.replace('USDT','');$('orderPrice').textContent=fmtIDR(last*16000);$('posNow').textContent=fmtIDR(last*16000);$('posCurrent').textContent=fmtIDR(last*16000)}
   function renderSR(){const o=$('overlay');o.querySelectorAll('.sr').forEach(x=>x.remove());if(!currentData.length)return;const highs=currentData.slice(-80).map(x=>x.high), lows=currentData.slice(-80).map(x=>x.low);[Math.max(...highs),Math.min(...lows)].forEach((v,i)=>{const d=document.createElement('div');d.className='sr';d.style.position='absolute';d.style.left='0';d.style.right='0';d.style.top=(i?'88%':'13%');d.style.borderTop='1px dashed '+(i?'#00c98a':'#ffb73a');d.style.opacity='.55';d.style.pointerEvents='none';o.appendChild(d)})}
   function renderOverlay(){const o=$('overlay');o.querySelectorAll('.fibline,.trendline').forEach(x=>x.remove());if(!$('fibBtn').classList.contains('active')&&!$('trendBtn').classList.contains('active'))return;const add=(top,text,color,cls)=>{const d=document.createElement('div');d.className=cls;d.style.position='absolute';d.style.left='10%';d.style.right='8%';d.style.top=top;d.style.borderTop='1px dashed '+color;d.style.color=color;d.style.fontSize='9px';d.style.paddingTop='2px';d.textContent=text;o.appendChild(d)};if($('fibBtn').classList.contains('active')){['0%','23.6%','38.2%','50%','61.8%','78.6%','100%'].forEach((x,i)=>add((18+i*10)+'%',x,'#f4b63e','fibline'))}if($('trendBtn').classList.contains('active'))add('48%','Trendline ↗','#20d7ff','trendline')}
   function applyRealtimeCandle(c, closed=false){
@@ -278,29 +309,99 @@
   async function pollMarket(){
     if(realtimeConnected) return;
     try{
-      const q='symbol='+encodeURIComponent(state.symbol)+'&interval=15m&limit=3';
+      const q='symbol='+encodeURIComponent(state.symbol)+'&interval='+encodeURIComponent(state.interval||'15m')+'&limit=3';
       const klines=await api('/fapi/v1/klines?'+q); const k=klines?.at(-1); if(!k)return;
       const c={time:k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5],closed:Date.now()>=+k[6]};
-      await saveNeonCandles(state.symbol,'15m',[c]);
+      await saveNeonCandles(state.symbol,state.interval||'15m',[c]);
       const prev=currentData.at(-1)?.time; applyRealtimeCandle(c, prev!=null && c.time!==prev);
-      realtimeConnected=true;
+      // REST success is only fallback data; do not call it WebSocket LIVE.
+      setRealtimeStatus(false,'Using Binance REST fallback');
     }catch(e){ console.warn('Binance REST fallback:',e.message); realtimeConnected=false; }
   }
   function startPolling(){ if(pollTimer)clearInterval(pollTimer); pollTimer=setInterval(pollMarket,5000); pollMarket(); }
   async function wsConnect(){
-    if(state.ws)try{state.ws.close()}catch{}; state.interval='15m';
+    const myGeneration=++wsGeneration;
+    if(wsReconnectTimer){clearTimeout(wsReconnectTimer);wsReconnectTimer=null;}
+    if(state.ws){try{state.ws.close(1000,'switch/reconnect')}catch{};state.ws=null;}
+    const symbol=state.symbol.toLowerCase();
+    const interval=state.interval||'15m';
     const cfg=await getBinanceConfig();
-    const base=String(cfg.marketWsUrl || cfg.wsUrl || 'wss://fstream.binance.com/market').replace(/\/$/,'');
-    const wsUrl=base.endsWith('/market') ? base+'/ws/'+state.symbol.toLowerCase()+'@kline_15m' : base+'/market/ws/'+state.symbol.toLowerCase()+'@kline_15m';
+    if(myGeneration!==wsGeneration)return;
+    const base=cfg.marketWsUrl || cfg.wsUrl || 'wss://fstream.binance.com';
+    const wsUrl=buildBinanceWsUrl(base, symbol+'@kline_'+interval);
+    setRealtimeStatus(false,'Connecting to '+wsUrl);
+    let ws;
     try{
-      state.ws=new WebSocket(wsUrl);
-      state.ws.onopen=()=>{realtimeConnected=true; toast('Binance Futures WebSocket LIVE');};
-      state.ws.onmessage=e=>{try{const m=JSON.parse(e.data);const k=m?.k;if(!k)return;const c={time:Number(k.t)/1000,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,closed:!!k.x};lastWsCandle=c;applyRealtimeCandle(c,!!k.x);saveNeonCandles(state.symbol,'15m',[c]);}catch(err){console.warn('Binance WS message:',err)}};
-      state.ws.onerror=()=>{realtimeConnected=false; console.warn('Binance WS error',wsUrl);};
-      state.ws.onclose=()=>{realtimeConnected=false; setTimeout(()=>{if(!realtimeConnected) wsConnect()},3000);};
-    }catch(e){realtimeConnected=false; console.warn('Binance WS connect:',e.message);}
-    startPolling();
+      ws=new WebSocket(wsUrl);
+      state.ws=ws;
+
+      ws.onopen=()=>{
+        if(myGeneration!==wsGeneration){try{ws.close()}catch{};return;}
+        wsBackoffMs=1000;
+        lastWsEventAt=Date.now();
+        setRealtimeStatus(true,'Binance Futures WebSocket: '+interval);
+        toast('Binance Futures LIVE · '+state.symbol+' '+interval);
+      };
+
+      ws.onmessage=e=>{
+        if(myGeneration!==wsGeneration)return;
+        try{
+          const m=JSON.parse(e.data);
+          const k=m?.k;
+          if(!k)return;
+          lastWsEventAt=Date.now();
+          const c={
+            time:Number(k.t)/1000,
+            open:+k.o, high:+k.h, low:+k.l, close:+k.c,
+            volume:+k.v, closed:!!k.x
+          };
+          if(![c.time,c.open,c.high,c.low,c.close,c.volume].every(Number.isFinite))return;
+          lastWsCandle=c;
+          applyRealtimeCandle(c,!!k.x);
+          // Persist periodically and always persist the final closed candle.
+          saveLiveCandleThrottled(c,!!k.x);
+        }catch(err){console.warn('Binance WS message:',err);}
+      };
+
+      ws.onerror=err=>{
+        if(myGeneration!==wsGeneration)return;
+        setRealtimeStatus(false,'Binance WebSocket error');
+        console.warn('Binance WS error',wsUrl,err||'');
+      };
+
+      ws.onclose=()=>{
+        if(myGeneration!==wsGeneration)return;
+        state.ws=null;
+        setRealtimeStatus(false,'Binance WebSocket disconnected');
+        const wait=Math.min(wsBackoffMs,15000);
+        wsBackoffMs=Math.min(wsBackoffMs*2,15000);
+        wsReconnectTimer=setTimeout(()=>{
+          if(myGeneration===wsGeneration)wsConnect();
+        },wait);
+      };
+    }catch(e){
+      if(myGeneration!==wsGeneration)return;
+      state.ws=null;
+      setRealtimeStatus(false,'WebSocket constructor failed');
+      console.warn('Binance WS connect:',e.message);
+      const wait=Math.min(wsBackoffMs,15000);
+      wsBackoffMs=Math.min(wsBackoffMs*2,15000);
+      wsReconnectTimer=setTimeout(()=>{if(myGeneration===wsGeneration)wsConnect()},wait);
+    }
+
+    // Keep REST polling only as a fallback. A stale socket is actively closed
+    // so the fallback can take over instead of trusting a dead connection.
+    if(!pollTimer)startPolling();
   }
+
+  setInterval(()=>{
+    if(state.ws && realtimeConnected && lastWsEventAt && Date.now()-lastWsEventAt>WS_STALE_MS){
+      console.warn('Binance WS stale; reconnecting');
+      setRealtimeStatus(false,'No Binance WebSocket events for '+WS_STALE_MS+'ms');
+      try{state.ws.close()}catch{}
+    }
+  },2000);
+
   function openPosition(side,auto=false,pct=1,signal=null){if(state.position){toast('Posisi masih terbuka. Tidak menambah posisi secara buta.');return}const p=state.price, qty=0.0072*pct;const slDist=signal?.slDist||p*.008,tpDist=signal?.tpDist||p*.016;state.position={side,entry:p,qty,opened:Date.now(),allocatedPct:pct,signalScore:signal?.score||state.earlyScore,sl:side==='BUY'?p-slDist:p+slDist,tp1:side==='BUY'?p+tpDist*.65:p-tpDist*.65,tp:side==='BUY'?p+tpDist:p-tpDist,remainingQty:qty,tp1Done:false,be:false,trail:false};$('posStatus').textContent='● '+side;$('posStatus').className=side==='BUY'?'green':'red';$('posEntry').textContent=fmtIDR(p*1000000);$('openCount').textContent='1';$('positionRow').innerHTML='<span><b>'+state.symbol+'</b><small style="display:block;color:#71849b">Perpetual · '+Math.round(pct*100)+'% allocation</small></span><span class="badge">'+side+'</span><span>'+qty.toFixed(6)+'</span><span>'+fmtIDR(p*1000000)+'</span><span id="posCurrent">'+fmtIDR(p*1000000)+'</span><span id="rowPnl" class="green">Rp 0</span><span id="rowRoe" class="green">0.00%</span><span class="green">● Aktif</span>';toast((auto?'Paper Early Entry · ':'Paper ')+side+' '+Math.round(pct*100)+'% · score '+(signal?.score||state.earlyScore));updatePosition()}
   function updatePosition(){if(!state.position)return;const p=state.price,e=state.position.entry,q=state.position.qty;const diff=state.position.side==='BUY'?p-e:e-p;const pnl=diff*q*16000,roe=diff/e*100*10;if(state.paper){const pos=state.position;const dir=pos.side==='BUY'?1:-1;const tp1Hit=dir>0?p>=pos.tp1:p<=pos.tp1;const tpHit=dir>0?p>=pos.tp:p<=pos.tp;const slHit=dir>0?p<=pos.sl:p>=pos.sl;if(tp1Hit&&!pos.tp1Done){pos.tp1Done=true;pos.be=true;pos.sl=e+(dir*e*0.0005);toast('Paper TP1 · 30% profit protected · SL Plus BE');}if(pos.tp1Done&&!pos.trail&&((dir>0?p>=e+pos.tp1-e:p<=e-(pos.tp1-e)))){pos.trail=true;}if(pos.trail){const trail=dir>0?p*0.997:p*1.003;pos.sl=dir>0?Math.max(pos.sl,trail):Math.min(pos.sl,trail);}if(slHit||tpHit){const reason=tpHit?'TP':'SL/Trail';toast('Paper '+reason+' · '+(pnl>=0?'Profit ':'Loss ')+fmtIDR(pnl));journalAdd(pos.side,e,p,pnl,pos.signalScore,reason);if(pnl<0)state.consecutiveLoss++;else state.consecutiveLoss=0;state.dailyLoss+=Math.min(0,pnl);state.position=null;state.cooldownUntil=Date.now()+60000;$('posStatus').textContent='● FLAT';$('posStatus').className='green';$('posEntry').textContent='—';$('posPnl').textContent='Rp 0';$('posRoe').textContent='0.00%';$('openCount').textContent='0';return;}}$('posPnl').textContent=(pnl>=0?'+':'')+fmtIDR(pnl);$('posPnl').className=pnl>=0?'green':'red';$('posRoe').textContent=(roe>=0?'+':'')+roe.toFixed(2)+'%';$('posRoe').className=roe>=0?'green':'red';const rp=$('rowPnl'),rr=$('rowRoe');if(rp){rp.textContent=(pnl>=0?'+':'')+fmtIDR(pnl);rp.className=pnl>=0?'green':'red';rr.textContent=(roe>=0?'+':'')+roe.toFixed(2)+'%';rr.className=roe>=0?'green':'red'}$('slValue').textContent=fmtIDR((state.position?.sl||0)*1000000);$('tpValue').textContent=fmtIDR((state.position?.tp||0)*1000000)+' · '+(state.position?.trail?'TRAIL':'TP1→BE')}
   function closePosition(){if(!state.position){toast('Tidak ada posisi terbuka');return}updatePosition();const p=state.price,e=state.position.entry,q=state.position.qty;const diff=state.position.side==='BUY'?p-e:e-p;const pnl=diff*q*16000;toast('Posisi ditutup · '+(pnl>=0?'Profit ':'Loss ')+fmtIDR(pnl));state.position=null;$('posStatus').textContent='● FLAT';$('posStatus').className='green';$('posEntry').textContent='—';$('posPnl').textContent='Rp 0';$('posRoe').textContent='0.00%';$('openCount').textContent='0';$('positionRow').innerHTML='<span>—</span><span>—</span><span>—</span><span>—</span><span id="posCurrent">'+fmtIDR(state.price*16000)+'</span><span>—</span><span>—</span><span>—</span>'}
@@ -317,8 +418,25 @@
     for(let i=22;i<data.length-1;i++){const x=earlyScoreFor(data.slice(0,i+1)); if(x.score<70||x.side==='WAIT'||x.rr<1.5)continue; const e=data[i].close, dir=x.side==='BUY'?1:-1, sl=x.slDist, tp=x.tpDist; let out=0; for(let j=i+1;j<data.length;j++){const c=data[j];if(dir>0&&c.low<=e-sl){out=-1;break}if(dir<0&&c.high>=e+sl){out=-1;break}if(dir>0&&c.high>=e+tp){out=x.rr;break}if(dir<0&&c.low<=e-tp){out=x.rr;break}} if(!out)continue; pnl+=out; peak=Math.max(peak,pnl); maxDD=Math.max(maxDD,peak-pnl); if(out>0){wins++;streak=0}else{losses++;streak++;maxStreak=Math.max(maxStreak,streak)}}
     const total=wins+losses, wr=total?wins/total*100:0, pf=losses?((pnl+losses)/losses):0; $('backtestResult').innerHTML='<b>'+total+' trades</b> · Win rate <b>'+wr.toFixed(1)+'%</b> · Net R <b>'+pnl.toFixed(2)+'</b><br>Profit Factor <b>'+pf.toFixed(2)+'</b> · Max DD <b>'+maxDD.toFixed(2)+'R</b> · Max Consecutive Loss <b>'+maxStreak+'</b>'; toast('Backtest 15M selesai');
   }
-  async function switchSymbol(symbol,auto=false){state.symbol=symbol;$('pairLabel').textContent=symbol;await loadSymbol(symbol);wsConnect();toast((auto?'Paper Engine auto-switch → ':'Pair → ')+symbol)}
-  document.querySelectorAll('.tf button').forEach(b=>b.onclick=()=>{if(b.textContent!=='15m'){toast('ILHAM NOVANDI 15M Focus: timeframe lain dikunci.');return}document.querySelectorAll('.tf button').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.interval='15m';loadSymbol();wsConnect()});
+  async function switchSymbol(symbol,auto=false){
+    state.symbol=symbol;
+    $('pairLabel').textContent=symbol;
+    ++wsGeneration;
+    if(state.ws){try{state.ws.close(1000,'symbol switch')}catch{};state.ws=null;}
+    await loadSymbol(symbol);
+    wsConnect();
+    toast((auto?'Paper Engine auto-switch → ':'Pair → ')+symbol);
+  }
+  document.querySelectorAll('.tf button').forEach(b=>b.onclick=async()=>{
+    if(b.textContent!=='15m'){toast('ILHAM NOVANDI 15M Focus: timeframe lain dikunci.');return}
+    document.querySelectorAll('.tf button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    state.interval='15m';
+    ++wsGeneration;
+    if(state.ws){try{state.ws.close(1000,'timeframe switch')}catch{};state.ws=null;}
+    await loadSymbol();
+    wsConnect();
+  });
 $('panicBtn').onclick=closePosition;$('closePopup').onclick=()=>$('candlePopup').classList.remove('show');$('candleBtn').onclick=()=>$('candlePopup').classList.toggle('show');['fibBtn','trendBtn','srBtn','emaBtn','superBtn'].forEach(id=>$(id).onclick=()=>{$(id).classList.toggle('active');if(id==='emaBtn')emaSeries.applyOptions({visible:$(id).classList.contains('active')});if(id==='srBtn')renderSR();else renderOverlay()});$('paperBtn').onclick=()=>{state.paper=!state.paper;$('paperBtn').textContent='Paper Engine: '+(state.paper?'ON':'OFF');toast('Paper Engine '+(state.paper?'aktif':'nonaktif'))};$('modalClose').onclick=()=>$('modal').classList.remove('show');
   async function backend(path, options={}){
     const r=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});

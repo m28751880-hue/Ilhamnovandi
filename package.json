@@ -1,6 +1,6 @@
 {
   "name": "ilham-novandi-trading-terminal",
-  "version": "8.7.0",
+  "version": "8.9.2",
   "private": true,
   "engines": {
     "node": "24.x"
