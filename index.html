@@ -99,7 +99,7 @@ body{font-size:13px}
 
 
 
-/* ===== v8.9.0 MOBILE SINGLE TRADE BAR ===== */
+/* ===== v8.9.1 MOBILE SINGLE TRADE BAR ===== */
 @media (pointer: coarse){
   .positions{grid-template-rows:42px 135px 150px;min-height:327px;overflow:visible}
   .ordergrid{grid-template-columns:1fr 1fr!important;align-items:stretch}
@@ -119,7 +119,7 @@ body{font-size:13px}
     <nav class="nav">
       <a class="active" href="#"><i>⌂</i>Dashboard</a><a href="#scanner"><i>⌁</i>Trading</a><a href="#scanner"><i>◉</i>Market</a><a href="#signals"><i>✦</i>AI Signals</a><a href="#education"><i>◫</i>Candle Learning</a><a href="#history"><i>◷</i>Riwayat</a><a href="#settings"><i>⚙</i>Pengaturan</a>
     </nav>
-    <div class="promo"><div class="gem">♦</div><strong>ILHAM NOVANDI</strong><span>Trade Smarter With AI</span></div><div class="version"><span>v8.9.0 UI</span><span class="ticker"><i class="dot"></i> Online</span></div>
+    <div class="promo"><div class="gem">♦</div><strong>ILHAM NOVANDI</strong><span>Trade Smarter With AI</span></div><div class="version"><span>v8.9.1 UI</span><span class="ticker"><i class="dot"></i> Online</span></div>
   </aside>
   <header class="top">
     <div class="pairbox"><div class="coin">₿</div><div><div class="pair" id="pairLabel">BTCUSDT</div><div class="sub">Perpetual · Binance</div></div><span style="margin-left:auto">⌄</span></div>
@@ -323,7 +323,7 @@ body{font-size:13px}
     throw new Error('Belum ada candle Binance Futures di Neon dan history Binance tidak dapat diambil. WebSocket tetap dijalankan untuk data realtime.');
   };
   const market24 = async (symbol='BTCUSDT') => { const r=await fetch('/api/binance?action=market24&symbol='+encodeURIComponent(symbol),{cache:'no-store'}); const data=await r.json().catch(()=>({error:'Ticker response tidak valid'})); if(!r.ok || !data.ok) throw new Error(data.error||'Ticker proxy error'); return data.ticker || data; };
-  let pollTimer=null, realtimeConnected=false, lastWsCandle=null;
+  let pollTimer=null, realtimeConnected=false, lastWsCandle=null, lastKlineAt=0;
   const calcEMA=(arr,p=20)=>{let k=2/(p+1),e=arr[0]||0;return arr.map((v,i)=>{if(i===0)e=v;else e=v*k+e*(1-k);return e})};
   function earlyScoreFor(data){
     if(!data || data.length<22) return {score:0,side:'WAIT',momentum:0,volume:0,structure:'WAIT',breakout:'WAIT',risk:0,rr:0,ema:0};
@@ -411,7 +411,7 @@ body{font-size:13px}
   };
   function updateRisk(p,side){const sl=side==='BUY'?p*.992:p*1.008,tp=side==='BUY'?p*1.016:p*.984;$('slValue').textContent=fmtIDR(sl*1000000);$('tpValue').textContent=fmtIDR(tp*1000000+'');}
 
-  function update15mCountdown(timeSec){const period=intervalSeconds(state.interval), now=Math.floor(Date.now()/1000), start=timeSec||now, elapsed=Math.max(0,now-start)%period, remain=period-elapsed; const mm=String(Math.floor(remain/60)).padStart(2,'0'),ss=String(remain%60).padStart(2,'0'); $('tfCountdown').textContent=mm+':'+ss; $('tfProgress').style.width=((elapsed/900)*100).toFixed(1)+'%';}
+  function update15mCountdown(timeSec){const period=intervalSeconds(state.interval), now=Math.floor(Date.now()/1000), start=timeSec||now, elapsed=Math.max(0,now-start)%period, remain=period-elapsed; const mm=String(Math.floor(remain/60)).padStart(2,'0'),ss=String(remain%60).padStart(2,'0'); $('tfCountdown').textContent=mm+':'+ss; $('tfProgress').style.width=((elapsed/period)*100).toFixed(1)+'%';}
   async function loadSymbol(symbol=state.symbol){ state.interval=state.interval||'15m';
     try{
       const m=await marketApi(symbol,state.interval,260); const ks=m.klines, t=m.ticker||{};
@@ -428,37 +428,82 @@ body{font-size:13px}
       console.warn('loadSymbol failed:',e);
     }
   }
-  function updateHeader(t){const last=Number(t.lastPrice||state.price||0);$('pairLabel').textContent=state.symbol;$('chartPair').textContent=state.symbol+' · '+state.interval+' · Binance Futures → Neon · v8.9.0';$('topPrice').textContent=fmtIDR(last*16000);$('topChange').textContent=(+t.priceChangePercent>=0?'+':'')+Number(t.priceChangePercent||0).toFixed(2)+'%';$('high24').textContent=fmtIDR(Number(t.highPrice||state.high||0)*16000);$('low24').textContent=fmtIDR(Number(t.lowPrice||state.low||0)*16000);$('vol24').textContent=Number(t.volume||state.vol||0).toFixed(0)+' '+state.symbol.replace('USDT','');$('orderPrice').textContent=fmtIDR(last*16000);$('posNow').textContent=fmtIDR(last*16000);$('posCurrent').textContent=fmtIDR(last*16000);$('liveLast').textContent=fmtPx(last);$('liveBid').textContent=fmtPx(state.bid||last);$('liveAsk').textContent=fmtPx(state.ask||last);$('liveMark').textContent=fmtPx(state.mark||last);$('liveVol').textContent=Number(state.vol||t.volume||0).toFixed(2);$('liveSync').textContent=realtimeConnected?'LIVE':'FALLBACK';$('liveSync').className='sync-badge '+(realtimeConnected?'ok':'bad')}
+  function updateHeader(t){
+    const last=Number(t.lastPrice||state.price||0);
+    setText('pairLabel',state.symbol);
+    setText('chartPair',state.symbol+' · '+state.interval+' · Binance Futures → Neon · v8.9.1');
+    setText('topPrice',fmtIDR(last*16000));
+    setText('topChange',(Number(t.priceChangePercent||0)>=0?'+':'')+Number(t.priceChangePercent||0).toFixed(2)+'%');
+    setText('high24',fmtIDR(Number(t.highPrice||state.high||0)*16000));
+    setText('low24',fmtIDR(Number(t.lowPrice||state.low||0)*16000));
+    setText('vol24',Number(t.volume||state.vol||0).toFixed(0)+' '+state.symbol.replace('USDT',''));
+    setText('orderPrice',fmtIDR(last*16000));
+    setText('posNow',fmtIDR(last*16000));
+    setText('posCurrent',fmtIDR(last*16000));
+    setText('liveLast',fmtPx(last));
+    setText('liveBid',fmtPx(state.bid||last));
+    setText('liveAsk',fmtPx(state.ask||last));
+    setText('liveMark',fmtPx(state.mark||last));
+    setText('liveVol',Number(state.vol||t.volume||0).toFixed(2));
+    setText('liveSync',realtimeConnected?'LIVE':'FALLBACK');
+    setClass('liveSync','sync-badge '+(realtimeConnected?'ok':'bad'));
+  }
+
   function renderSR(){const o=$('overlay');o.querySelectorAll('.sr').forEach(x=>x.remove());if(!currentData.length)return;const highs=currentData.slice(-80).map(x=>x.high), lows=currentData.slice(-80).map(x=>x.low);[Math.max(...highs),Math.min(...lows)].forEach((v,i)=>{const d=document.createElement('div');d.className='sr';d.style.position='absolute';d.style.left='0';d.style.right='0';d.style.top=(i?'88%':'13%');d.style.borderTop='1px dashed '+(i?'#00c98a':'#ffb73a');d.style.opacity='.55';d.style.pointerEvents='none';o.appendChild(d)})}
   function renderOverlay(){const o=$('overlay');o.querySelectorAll('.fibline,.trendline').forEach(x=>x.remove());if(!$('fibBtn').classList.contains('active')&&!$('trendBtn').classList.contains('active'))return;const add=(top,text,color,cls)=>{const d=document.createElement('div');d.className=cls;d.style.position='absolute';d.style.left='10%';d.style.right='8%';d.style.top=top;d.style.borderTop='1px dashed '+color;d.style.color=color;d.style.fontSize='9px';d.style.paddingTop='2px';d.textContent=text;o.appendChild(d)};if($('fibBtn').classList.contains('active')){['0%','23.6%','38.2%','50%','61.8%','78.6%','100%'].forEach((x,i)=>add((18+i*10)+'%',x,'#f4b63e','fibline'))}if($('trendBtn').classList.contains('active'))add('48%','Trendline ↗','#20d7ff','trendline')}
   function applyRealtimeCandle(c, closed=false){
-    if(!c || !Number.isFinite(c.time)) return;
+    if(!c || !Number.isFinite(Number(c.time))) return;
     const normalized={time:Number(c.time),open:Number(c.open),high:Number(c.high),low:Number(c.low),close:Number(c.close),volume:Number(c.volume||0),closed:!!closed};
+    if(![normalized.open,normalized.high,normalized.low,normalized.close,normalized.volume].every(Number.isFinite)) return;
     const idx=currentData.findIndex(x=>x.time===normalized.time);
     if(idx>=0) currentData[idx]=normalized; else currentData.push(normalized);
     currentData.sort((a,b)=>a.time-b.time);
     if(currentData.length>260) currentData=currentData.slice(-260);
-    state.price=normalized.close; state.candles=currentData; state.ema20=calcEMA(currentData.map(x=>x.close)); state.wsLastAt=Date.now(); lastWsCandle=normalized;
+    state.price=normalized.close; state.candles=currentData; state.ema20=calcEMA(currentData.map(x=>x.close));
+    state.wsLastAt=Date.now(); lastKlineAt=Date.now(); lastWsCandle=normalized;
     candleSeries.setData(currentData);
     emaSeries.setData(currentData.map((x,i)=>({time:x.time,value:state.ema20[i]})));
-    $('topPrice').textContent=fmtIDR(normalized.close*16000);$('posNow').textContent=fmtIDR(normalized.close*16000);$('posCurrent').textContent=fmtIDR(normalized.close*16000);$('orderPrice').textContent=fmtIDR(normalized.close*16000);$('liveLast').textContent=fmtPx(normalized.close);
-    $('ohlc').textContent='O '+fmtPx(normalized.open)+' H '+fmtPx(normalized.high)+' L '+fmtPx(normalized.low)+' C '+fmtPx(normalized.close);
-    $('liveSync').textContent='LIVE';$('liveSync').className='sync-badge ok';
-    analyze(); renderSR(); if(state.position)updatePosition(); if(closed) toast(state.interval.toUpperCase()+' candle closed · synced');
+    setText('topPrice',fmtIDR(normalized.close*16000));
+    setText('posNow',fmtIDR(normalized.close*16000));
+    setText('posCurrent',fmtIDR(normalized.close*16000));
+    setText('orderPrice',fmtIDR(normalized.close*16000));
+    setText('liveLast',fmtPx(normalized.close));
+    setText('ohlc','O '+fmtPx(normalized.open)+' H '+fmtPx(normalized.high)+' L '+fmtPx(normalized.low)+' C '+fmtPx(normalized.close));
+    setText('liveSync','LIVE'); setClass('liveSync','sync-badge ok');
+    analyze(); renderSR();
+    if(state.position)updatePosition();
+    if(closed) toast(state.interval.toUpperCase()+' candle closed · synced');
   }
+
   async function pollMarket(){
     try{
-      const r=await fetch('/api/binance?action=market24&symbol='+encodeURIComponent(state.symbol),{cache:'no-store'}); const d=await r.json().catch(()=>({}));
-      if(!r.ok||!d.ok||!d.ticker)throw new Error(d.error||('ticker HTTP '+r.status));
-      const t=d.ticker, price=Number(t.lastPrice); if(!Number.isFinite(price))return;
+      const r=await fetch('/api/binance?action=market24&symbol='+encodeURIComponent(state.symbol),{cache:'no-store'});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok||!d.ok||!d.ticker) throw new Error(d.error||('ticker HTTP '+r.status));
+      const t=d.ticker, price=Number(t.lastPrice); if(!Number.isFinite(price)) return;
       state.lastTicker=t; state.price=price; state.high=Number(t.highPrice||state.high); state.low=Number(t.lowPrice||state.low); state.vol=Number(t.volume||state.vol);
-      if(!realtimeConnected){
-        const q=await fetch('/api/binance?action=proxy&path='+encodeURIComponent('/fapi/v1/klines?symbol='+state.symbol+'&interval='+state.interval+'&limit=2'),{cache:'no-store'});
-        const kd=await q.json().catch(()=>({})); if(kd.ok&&Array.isArray(kd.data)&&kd.data.length){const k=kd.data.at(-1);applyRealtimeCandle({time:+k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:price,volume:+k[5]},false);}
+      // Keep the display moving even if the kline stream is temporarily silent.
+      const last=currentData.at(-1);
+      if(last && (!lastKlineAt || Date.now()-lastKlineAt>1500)){
+        const live={time:last.time,open:last.open,high:Math.max(last.high,price),low:Math.min(last.low,price),close:price,volume:last.volume,closed:false};
+        applyRealtimeCandle(live,false);
+      }
+      // If the websocket has been silent, ask Binance Futures REST for the current kline as a secondary recovery path.
+      if(!lastKlineAt || Date.now()-lastKlineAt>8000){
+        try{
+          const q=await fetch('/api/binance?action=proxy&path='+encodeURIComponent('/fapi/v1/klines?symbol='+state.symbol+'&interval='+state.interval+'&limit=2'),{cache:'no-store'});
+          const kd=await q.json().catch(()=>({}));
+          if(kd.ok&&Array.isArray(kd.data)&&kd.data.length){const k=kd.data.at(-1);applyRealtimeCandle({time:+k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]},false);}
+        }catch(err){console.warn('Kline recovery:',err.message)}
       }
       updateHeader(t);
-    }catch(e){if(Date.now()-state.wsLastAt>8000){realtimeConnected=false;$('liveSync').textContent='OFFLINE';$('liveSync').className='sync-badge bad'} console.warn('Binance fallback:',e.message)}
+      update15mCountdown(currentData.at(-1)?.time||Math.floor(Date.now()/1000));
+    }catch(e){
+      if(Date.now()-lastKlineAt>8000){realtimeConnected=false;setText('liveSync','OFFLINE');setClass('liveSync','sync-badge bad');}
+      console.warn('Binance fallback:',e.message);
+    }
   }
+
   function startPolling(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(pollMarket,5000);pollMarket()}
   async function wsConnect(){
     if(state.ws)try{state.ws.close()}catch{}; state.interval=state.interval||'15m'; const cfg=await getBinanceConfig();
@@ -521,7 +566,7 @@ $('panicBtn').onclick=closePosition;$('closePopup').onclick=()=>$('candlePopup')
     try{
       const st=await backend('/api/binance?action=status');
       if(!st.liveEnabled) throw new Error('Live trading masih OFF di Vercel.');
-      const order=await backend('/api/binance?action=bracket',{method:'POST',headers:{'x-live-confirm':'ILHAM-NOVANDI-LIVE'},body:JSON.stringify({symbol:state.symbol,side,quantity,entryPrice:state.price})});
+      const order=await backend('/api/binance?action=bracket',{method:'POST',headers:{'x-live-confirm':'ILHAM-NOVANDI-LIVE'},body:JSON.stringify({symbol:state.symbol,side,quantity:qty,entryPrice:state.price})});
       toast('LIVE '+side+' + SL/TP aktif · Order '+(order.open?.orderId||'OK')); await refreshAccount();
     }catch(e){toast('LIVE gagal: '+e.message)}
   }
