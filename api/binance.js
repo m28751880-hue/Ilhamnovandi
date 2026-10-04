@@ -53,9 +53,9 @@ async function handler(req,res){
   if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.2',marketBaseUrl:MARKET_BASE_URL});
   if(action==='config'){
     const wsUrl=process.env.BINANCE_WS_URL||'wss://fstream.binance.com';
-    const marketWsUrl=process.env.BINANCE_MARKET_WS_URL||'wss://fstream.binance.com/market';
-    const privateWsUrl=process.env.BINANCE_PRIVATE_WS_URL||'wss://fstream.binance.com/private';
-    return json(res,200,{ok:true,wsUrl,marketWsUrl,publicWsUrl:process.env.BINANCE_PUBLIC_WS_URL||'wss://fstream.binance.com/public',privateWsUrl,configured:configured(),liveEnabled:LIVE_ENABLED});
+    const marketWsUrl=process.env.BINANCE_MARKET_WS_URL||'wss://fstream.binance.com';
+    const privateWsUrl=process.env.BINANCE_PRIVATE_WS_URL||'wss://fstream.binance.com';
+    return json(res,200,{ok:true,wsUrl,marketWsUrl,publicWsUrl:process.env.BINANCE_PUBLIC_WS_URL||'wss://fstream.binance.com',privateWsUrl,configured:configured(),liveEnabled:LIVE_ENABLED});
   }
   if(action==='status')return json(res,200,{ok:true,configured:configured(),liveEnabled:LIVE_ENABLED,maxNotionalUsdt:MAX_NOTIONAL||null});
   if(action==='proxy'){
@@ -85,6 +85,20 @@ async function handler(req,res){
       return json(res,502,{ok:false,error:e.message,details:e.details||null,fallback:'binance-futures-public-archive'});
     }
   }
+  if(action==='live'){
+    const symbol=String(req.query?.symbol||'BTCUSDT').toUpperCase();
+    const interval=String(req.query?.interval||'15m');
+    try{
+      const [price,klines,ticker]=await Promise.all([
+        marketFetch(`/fapi/v1/ticker/price?symbol=${encodeURIComponent(symbol)}`),
+        marketFetch(`/fapi/v1/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=2`),
+        marketFetch(`/fapi/v1/ticker/24hr?symbol=${encodeURIComponent(symbol)}`)
+      ]);
+      return json(res,200,{ok:true,symbol,interval,price,klines,ticker,serverTime:Date.now(),source:'binance-futures-live-relay'});
+    }catch(e){
+      return json(res,502,{ok:false,error:e.message,details:e.details||null,source:'binance-futures-live-relay'});
+    }
+  }
   if(action==='market24'){
     const symbol=String(req.query?.symbol||'BTCUSDT').toUpperCase();
     try{return json(res,200,{ok:true,symbol,ticker:await marketFetch(`/fapi/v1/ticker/24hr?symbol=${encodeURIComponent(symbol)}`),source:'binance-futures-rest'})}
@@ -104,7 +118,7 @@ async function handler(req,res){
     if(!configured())return json(res,400,{ok:false,error:'API key Binance Futures belum dikonfigurasi'});
     try{
       const data=await rawFetch(BASE_URL,'/fapi/v1/listenKey',{method:'POST',headers:{'X-MBX-APIKEY':API_KEY}});
-      return json(res,200,{ok:true,listenKey:data.listenKey,privateWsUrl:process.env.BINANCE_PRIVATE_WS_URL||'wss://fstream.binance.com/private'});
+      return json(res,200,{ok:true,listenKey:data.listenKey,privateWsUrl:process.env.BINANCE_PRIVATE_WS_URL||'wss://fstream.binance.com'});
     }catch(e){return json(res,e.status===401?401:502,{ok:false,error:e.message,details:e.details||null})}
   }
   if(action==='keepalive'){
