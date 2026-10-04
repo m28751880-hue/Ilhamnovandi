@@ -50,7 +50,7 @@ async function signedFetch(path,opts={}){return rawFetch(BASE_URL,path,{...opts,
 
 async function handler(req,res){
   const action=String(req.query?.action||'').toLowerCase();
-  if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.0',marketBaseUrl:MARKET_BASE_URL});
+  if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.2',marketBaseUrl:MARKET_BASE_URL});
   if(action==='config'){
     const wsUrl=process.env.BINANCE_WS_URL||'wss://fstream.binance.com';
     const marketWsUrl=process.env.BINANCE_MARKET_WS_URL||'wss://fstream.binance.com/market';
