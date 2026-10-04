@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ilham Novandi — Futures Trading Terminal</title>
+  <meta name="description" content="Ilham Novandi realtime Binance Futures trading terminal dengan chart, signal, risk engine dan Neon." />
+  <style>
+    :root{--bg:#030914;--panel:#06101e;--panel2:#071423;--line:#12233a;--text:#d8e3ef;--muted:#6d7d92;--cyan:#20d7ff;--green:#00d991;--red:#ff3e61;--yellow:#f5b73a;--blue:#1b7cff;--shadow:0 16px 45px rgba(0,0,0,.35)}
+    *{box-sizing:border-box}html,body{height:100%;margin:0;background:radial-gradient(circle at 70% -20%,#0c1e35 0,#030914 42%,#02060d 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overflow:hidden}
+    button,input,select{font:inherit}.app{height:100vh;display:grid;grid-template-columns:190px 1fr 354px;grid-template-rows:70px 1fr;grid-template-areas:'side top top' 'side main right';gap:0}
+    .top{grid-area:top;border-bottom:1px solid #122138;background:rgba(4,11,21,.92);display:flex;align-items:center;padding:0 18px;gap:14px;backdrop-filter:blur(18px);z-index:5}.brand{width:220px;display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.12em}.brand-mark{width:32px;height:32px;display:grid;place-items:center;filter:drop-shadow(0 0 10px #9b7a29)}.brand-mark svg{width:30px}.brand small{display:block;color:#8a99ad;font-size:9px;letter-spacing:.2em;margin-top:2px}.pairbox{height:45px;min-width:165px;border:1px solid #162a43;border-radius:10px;display:flex;align-items:center;gap:10px;padding:0 11px;background:#06101d}.coin{width:27px;height:27px;border-radius:50%;background:#f39c12;display:grid;place-items:center;color:#fff;font-weight:900}.pair{font-size:14px;font-weight:700}.sub{font-size:10px;color:#7c8da3}.price{font-size:15px;font-weight:800;color:#00d991;margin-left:6px}.change{font-size:11px;color:#00d991}.stats{display:flex;gap:22px;margin-left:auto}.stat span{display:block;font-size:10px;color:#6f8096}.stat b{font-size:11px;color:#dbe7f4}.top-actions{display:flex;gap:8px;margin-left:12px}.iconbtn{width:34px;height:34px;border:1px solid #14283f;border-radius:9px;background:#07111f;color:#aebed1;display:grid;place-items:center;cursor:pointer}.live{color:#00e095;font-size:10px;border:1px solid #123b35;padding:7px 10px;border-radius:999px;background:#061712}.side{grid-area:side;border-right:1px solid #122138;background:linear-gradient(180deg,#06101d,#040b14);padding:15px 10px;display:flex;flex-direction:column;z-index:6}.nav{display:flex;flex-direction:column;gap:6px;margin-top:10px}.nav a{height:42px;border-radius:9px;display:flex;align-items:center;gap:11px;padding:0 13px;color:#8293a9;text-decoration:none;font-size:12px;border:1px solid transparent}.nav a.active,.nav a:hover{background:linear-gradient(90deg,#09223a,#071727);border-color:#113d5c;color:#e2f6ff;box-shadow:inset 2px 0 var(--cyan)}.nav i{width:19px;text-align:center;color:#7b8ea5;font-style:normal}.promo{margin-top:auto;border:1px solid #142a42;border-radius:14px;padding:13px;background:linear-gradient(180deg,#091525,#060e18);min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;position:relative}.promo:before{content:'';position:absolute;inset:auto -25px -55px;height:130px;background:radial-gradient(ellipse,#9d6c1b55,transparent 65%);transform:rotate(-8deg)}.promo .gem{position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:50px;filter:drop-shadow(0 0 12px #a87824)}.promo strong{font-size:12px;letter-spacing:.2em;text-align:center}.promo span{font-size:11px;color:#d4ae6a;text-align:center;margin-top:7px}.version{font-size:9px;color:#5e7189;margin-top:13px;display:flex;justify-content:space-between}.main{grid-area:main;min-width:0;padding:12px 10px 10px;display:grid;grid-template-rows:44px minmax(0,1fr) 86px 270px;gap:10px;overflow:hidden}.toolbar{display:flex;align-items:center;gap:7px}.tf button,.toolbtn,.dropdown{border:1px solid #14283f;background:#071221;color:#8798ad;border-radius:8px;padding:7px 10px;font-size:11px;cursor:pointer}.tf button.active,.toolbtn.active{background:#0a2135;color:#e7fbff;border-color:#1a638c;box-shadow:0 0 12px #1d9bff18}.toolbtn.accent{color:#f5b73a;border-color:#7b4c15}.chart-panel{position:relative;border:1px solid #13263e;border-radius:12px;background:#040c16;overflow:hidden;box-shadow:var(--shadow)}#chart{position:absolute;inset:0}.chart-title{position:absolute;left:14px;top:9px;z-index:2;font-size:11px;color:#cbd9e8;pointer-events:none}.chart-title b{font-weight:500}.signal-tag{position:absolute;left:190px;top:9px;z-index:2;font-size:10px;color:#9db0c6;pointer-events:none}.overlay{position:absolute;inset:0;pointer-events:none;z-index:3}.price-line{position:absolute;right:0;padding:4px 7px;background:#12b879;color:#001a11;font-size:10px;font-weight:800;border-radius:3px 0 0 3px}.chart-popup{position:absolute;z-index:5;width:260px;right:20%;top:46%;background:rgba(6,16,29,.96);border:1px solid #294361;border-radius:13px;padding:13px;box-shadow:0 20px 50px #0009;display:none}.chart-popup.show{display:block}.popup-head{display:flex;justify-content:space-between;align-items:center}.popup-head b{color:#00e094}.popup-close{cursor:pointer;color:#7890a9}.kv{display:grid;grid-template-columns:1fr auto;gap:7px;font-size:10px;margin-top:10px}.kv span{color:#8191a5}.kv b{font-weight:600}.bottomcards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.mini{border:1px solid #13263e;border-radius:10px;background:#07111e;padding:11px 13px}.mini .label{font-size:9px;color:#778ba3;letter-spacing:.06em}.mini .big{font-size:17px;color:#00df93;font-weight:800;margin-top:4px}.mini .desc{font-size:9px;color:#73869b;margin-top:2px}.positions{border:1px solid #13263e;border-radius:11px;background:#06101c;display:grid;grid-template-rows:44px 1fr 118px;overflow:hidden}.tabs{display:flex;align-items:end;padding:0 12px;gap:30px;border-bottom:1px solid #14283e}.tabs span{height:44px;display:flex;align-items:center;font-size:10px;color:#70839b;cursor:pointer}.tabs span.active{color:#e6f7ff;border-bottom:2px solid #f2b642}.table{overflow:auto}.row{display:grid;grid-template-columns:1.3fr .7fr .7fr 1fr 1fr .8fr .7fr .8fr;gap:8px;padding:10px 13px;font-size:10px;align-items:center;border-bottom:1px solid #0e1d2f}.row.head{color:#6c819a;font-size:9px}.green{color:#00df93}.red{color:#ff4d6b}.badge{border:1px solid #0e644d;background:#062219;color:#00e096;border-radius:8px;padding:4px 8px;width:max-content}.orderbar{border-top:1px solid #12263c;padding:8px 13px}.ordertabs{display:flex;gap:22px;color:#8193a9;font-size:10px;margin-bottom:8px}.ordertabs .active{color:#d9ecff;border-bottom:1px solid var(--cyan);padding-bottom:4px}.ordergrid{display:grid;grid-template-columns:1fr 1fr 1fr 1.2fr;gap:8px}.field{background:#071321;border:1px solid #132a42;border-radius:7px;padding:8px;font-size:10px;color:#a6b8ca}.field label{display:block;color:#6c8098;font-size:8px;margin-bottom:4px}.order-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.buy,.sell{border:0;border-radius:8px;color:white;font-weight:800;cursor:pointer}.buy{background:linear-gradient(180deg,#17d58e,#0ab879)}.sell{background:linear-gradient(180deg,#ff526f,#e42f4f)}.right{grid-area:right;border-left:1px solid #122138;background:#040b14;padding:12px 12px 12px 10px;overflow:auto}.panel{border:1px solid #142940;background:#06101d;border-radius:12px;margin-bottom:10px;padding:13px}.panel h3{margin:0;font-size:12px}.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.ai{color:#1dd9ff;border:1px solid #16475c;border-radius:6px;padding:3px 6px;font-size:9px}.signal-score{display:flex;justify-content:space-between;align-items:center}.signal-score b{font-size:20px;color:#00e094}.pill{font-size:9px;padding:4px 8px;border-radius:7px;background:#06291f;color:#00e094;border:1px solid #0b5e48}.meter{height:3px;background:#102238;border-radius:99px;overflow:hidden;margin:8px 0 13px}.meter i{display:block;height:100%;background:#00d991;width:86%}.sigrow{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #102035}.sigrow:last-child{border:0}.sigrow .name{font-size:9px;color:#778aa1}.sigrow b{font-size:13px;color:#00df93;display:block}.sigrow small{display:block;color:#66798f;font-size:8px;margin-top:3px}.posbox{display:grid;grid-template-columns:1fr auto;gap:9px;font-size:9px}.posbox .muted{color:#70839a}.switch{width:34px;height:19px;border-radius:99px;background:#12c989;display:inline-block;position:relative}.switch:after{content:'';width:15px;height:15px;border-radius:50%;background:white;position:absolute;right:2px;top:2px}.controls{display:grid;gap:8px}.select{height:34px;background:#071321;border:1px solid #18304a;color:#b8c8d8;border-radius:7px;padding:0 9px;font-size:10px}.auto-note{font-size:8px;color:#6d8199;line-height:1.4}.trade-btn{width:100%;height:36px;border:1px solid #773044;border-radius:8px;background:#230c14;color:#ff6c84;font-weight:700;cursor:pointer}.trade-btn:hover{background:#3a0e1a}.educate{max-height:245px;overflow:auto}.lesson{padding:8px 0;border-bottom:1px solid #102035}.lesson b{font-size:9px}.lesson span{display:block;color:#73869b;font-size:8px;line-height:1.35;margin-top:3px}.ticker{display:flex;gap:8px;align-items:center}.dot{width:7px;height:7px;border-radius:50%;background:#00d991;box-shadow:0 0 8px #00d991}.scanner{max-height:220px;overflow:auto}.scanrow{display:grid;grid-template-columns:1.1fr .8fr .8fr;gap:4px;padding:8px 0;border-bottom:1px solid #102035;font-size:9px}.scanrow .pairname{font-weight:700}.scanrow button{font-size:8px;background:#091a2a;border:1px solid #173957;color:#9eb4c8;border-radius:5px;cursor:pointer}.toast{position:fixed;right:18px;bottom:18px;background:#071321;border:1px solid #21425f;color:#cde0f0;border-radius:9px;padding:10px 13px;font-size:10px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:.25s;z-index:99}.toast.show{opacity:1;transform:none}.modal{position:fixed;inset:0;background:#0008;display:none;place-items:center;z-index:100}.modal.show{display:grid}.modal-card{width:min(520px,92vw);background:#06101c;border:1px solid #1a3550;border-radius:14px;padding:18px;box-shadow:0 30px 90px #000b}.modal-card h2{font-size:15px;margin:0 0 8px}.modal-card p{font-size:10px;color:#8193a8;line-height:1.5}.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}.modal-actions button{border:1px solid #17324d;background:#0a1727;color:#bcd0e4;padding:8px 12px;border-radius:7px;cursor:pointer}.modal-actions .ok{background:#08bd7b;border-color:#08bd7b;color:#00160f;font-weight:800}
+    @media(max-width:1200px){.app{grid-template-columns:165px 1fr 300px}.stats{display:none}.brand{width:180px}.main{grid-template-rows:44px minmax(0,1fr) 76px 250px}.bottomcards{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:900px){body{overflow:auto}.app{height:auto;min-height:100vh;grid-template-columns:1fr;grid-template-rows:62px auto auto auto;grid-template-areas:'top' 'side' 'main' 'right'}.side{border-right:0;border-bottom:1px solid #122138;padding:7px;flex-direction:row;overflow:auto}.nav{flex-direction:row;margin:0}.nav a{min-width:max-content}.promo,.version{display:none}.main{height:850px}.right{height:auto}.top{overflow:auto}.brand{min-width:175px}.ordergrid{grid-template-columns:1fr 1fr}.order-actions{grid-column:1/-1}}
+  .account-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.account-stat{border:1px solid #17304a;background:#071321;border-radius:8px;padding:9px}.account-stat span{display:block;color:#71849a;font-size:8px}.account-stat b{display:block;margin-top:4px;color:#00df93;font-size:12px}.live-mode{border:1px solid #6d4b17!important;background:#1b1407!important;color:#f4bf56!important}.danger-note{font-size:9px;color:#ff8797;line-height:1.45;margin-top:8px}.account-status{font-size:9px;color:#7f93aa}.account-status.ok{color:#00df93}.account-status.bad{color:#ff7188}
+    .tf button.locked{opacity:.34;cursor:not-allowed;position:relative}.tf button.locked:after{content:'LOCK';font-size:6px;position:absolute;top:-7px;right:-4px;background:#17273a;color:#6f8299;border:1px solid #243a52;border-radius:4px;padding:1px 3px}.tf-focus{font-size:8px;letter-spacing:.12em;color:#20d7ff;border:1px solid #16445b;background:#061722;padding:6px 8px;border-radius:7px;white-space:nowrap}.tf-engine{box-shadow:inset 0 0 0 1px #0d2b3e,0 0 18px #00b7ff08}.tf-state{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.tf-state>div,.confirm-grid>div{background:#071321;border:1px solid #132a42;border-radius:7px;padding:7px}.tf-state span,.confirm-grid span,.closebar span{display:block;color:#6f8298;font-size:7px}.tf-state b{display:block;font-size:11px;color:#dcecf8;margin-top:3px}.closebar{margin-top:8px;background:#071321;border:1px solid #132a42;border-radius:7px;padding:7px}.closebar>div:first-child{display:flex;justify-content:space-between;align-items:center}.closebar b{font-size:12px;color:#20d7ff}.close-track{height:3px;background:#102238;border-radius:9px;overflow:hidden;margin-top:6px}.close-track i{display:block;height:100%;width:0;background:#20d7ff}.confirm-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.confirm-grid b{display:block;font-size:9px;margin-top:3px;color:#a9c1d4}.tf-good{color:#00df93!important}.tf-bad{color:#ff4d6b!important}.tf-warn{color:#f5b73a!important}
+
+    .early-panel{border-color:#204b61;background:linear-gradient(180deg,#061725,#06101c)}
+    .early-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.early-stat{border:1px solid #17324a;background:#071321;border-radius:8px;padding:8px}.early-stat span{display:block;font-size:8px;color:#71859b}.early-stat b{display:block;font-size:12px;margin-top:3px}.scorebar{height:5px;background:#112438;border-radius:99px;overflow:hidden;margin:8px 0}.scorebar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f4b63e,#00d991);transition:width .35s}.entry-state{display:flex;justify-content:space-between;align-items:center;margin-top:9px}.entry-badge{font-size:9px;font-weight:800;padding:5px 8px;border-radius:7px;border:1px solid #24516a;background:#092333;color:#8fdcff}.entry-badge.strong{color:#00e094;border-color:#0b624b;background:#06291f}.entry-badge.warn{color:#f4b63e;border-color:#725019;background:#241a08}.risk-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}.risk-mini div{border:1px solid #132b42;border-radius:6px;padding:6px}.risk-mini span{display:block;color:#6e8298;font-size:7px}.risk-mini b{font-size:9px}.split-note{font-size:8px;color:#71859b;line-height:1.4;margin-top:8px}
+
+    .smart-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.smart-stat{background:#071321;border:1px solid #132a42;border-radius:8px;padding:8px}.smart-stat span{display:block;font-size:8px;color:#6e8198}.smart-stat b{display:block;font-size:11px;margin-top:4px}.entry-window{height:7px;background:#102238;border-radius:99px;overflow:hidden;margin:8px 0}.entry-window i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f5b73a,#00d991)}.journal{max-height:180px;overflow:auto}.journal-row{display:grid;grid-template-columns:1fr .6fr .8fr .8fr;padding:7px 0;border-bottom:1px solid #102035;font-size:8px;gap:4px}.journal-row b{font-size:8px}.danger{color:#ff526f}.warn{color:#f5b73a}.good{color:#00df93}.mini-btn{border:1px solid #173957;background:#081725;color:#9eb4c8;border-radius:6px;padding:5px 7px;font-size:8px;cursor:pointer}.mini-btn:hover{border-color:#28749b}.backtest-result{font-size:9px;line-height:1.6;color:#8396ac}.backtest-result b{color:#dcecff}.stage{display:inline-block;padding:3px 6px;border-radius:6px;background:#092238;border:1px solid #174a67;color:#8fdcff;font-size:8px}
+
+/* ===== v8.8.1 RESPONSIVE UI ===== */
+:root{
+  --bg:#02060b;--panel:#07111c;--panel2:#091624;--line:#16283b;--line2:#1d344c;
+  --text:#e7eef7;--muted:#7d8ea2;--cyan:#38d8ff;--green:#00e6a0;--red:#ff4f72;--yellow:#f2bf55;
+  --radius:14px;--shadow:0 18px 55px rgba(0,0,0,.42)
+}
+html,body{background:#02060b}
+body{font-size:13px}
+.app{grid-template-columns:214px minmax(0,1fr) 350px;grid-template-rows:64px 1fr}
+.top{height:64px;padding:0 14px;background:rgba(3,9,16,.94);border-bottom-color:#142438;gap:10px}
+.brand{width:205px;gap:9px}.brand-mark{width:30px;height:30px}.brand small{font-size:8px}
+.pairbox{height:42px;min-width:174px;border-radius:12px;background:#081522;border-color:#1a2d43}
+.pair{font-size:13px}.sub{font-size:9px}.coin{width:25px;height:25px}
+.price{font-size:15px;margin-left:3px}.change{font-size:10px}
+.stats{gap:18px}.stat span{font-size:9px}.stat b{font-size:10px}
+.top-actions{gap:6px;margin-left:6px}.iconbtn{width:32px;height:32px;border-radius:10px}.live{padding:6px 9px;font-size:9px}
+.side{padding:12px 9px;background:linear-gradient(180deg,#06101a,#03080f);border-right-color:#142438}
+.nav{gap:4px;margin-top:12px}.nav a{height:40px;border-radius:10px;padding:0 12px;font-size:11px}.nav a.active,.nav a:hover{background:#0a1b2b;border-color:#173952;box-shadow:inset 3px 0 var(--cyan)}
+.promo{min-height:170px;border-radius:14px}.promo .gem{font-size:42px}.promo strong{font-size:10px}.promo span{font-size:9px}
+.main{padding:10px;grid-template-rows:42px minmax(0,1fr) 82px 250px;gap:9px}
+.toolbar{overflow-x:auto;scrollbar-width:none;padding-bottom:1px}.toolbar::-webkit-scrollbar{display:none}
+.tf{display:flex;gap:4px}.tf button,.toolbtn{white-space:nowrap;border-radius:9px;padding:7px 9px;font-size:10px}
+.tf-focus{white-space:nowrap;font-size:9px;color:#54c6e9;background:#071a27;border:1px solid #12405a;padding:7px 9px;border-radius:9px}
+.chart-panel{border-radius:14px;background:#030a12;border-color:#14283c;box-shadow:inset 0 1px 0 rgba(255,255,255,.02),var(--shadow)}
+.chart-title{left:13px;top:9px;font-size:10px}.signal-tag{left:205px;top:9px;font-size:9px}
+.bottomcards{gap:8px}.mini{border-radius:12px;background:linear-gradient(180deg,#081522,#06101a);padding:10px 12px}.mini .label{font-size:8px}.mini .big{font-size:15px}.mini .desc{font-size:8px}
+.positions{border-radius:14px;background:#06101a;border-color:#14283c;grid-template-rows:42px 1fr 112px}.tabs{gap:24px}.tabs span{font-size:9px;height:42px}.row{font-size:9px;padding:9px 11px}.row.head{font-size:8px}.orderbar{padding:8px 11px}.field{border-radius:9px;padding:8px;font-size:9px}.buy,.sell{border-radius:9px}
+.right{padding:10px 10px 18px;background:#03080f;border-left-color:#142438}.panel{border-radius:14px;background:linear-gradient(180deg,#081420,#06101a);border-color:#14283c;padding:12px;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.16)}.panel h3{font-size:11px}.section-title{margin-bottom:10px}.ai,.pill{font-size:8px}.signal-score b{font-size:19px}.sigrow{padding:8px 0}.sigrow b{font-size:12px}.sigrow small{font-size:8px}.early-stat span,.smart-stat span,.tf-state span,.confirm-grid span{font-size:7px}.early-stat b,.smart-stat b,.tf-state b,.confirm-grid b{font-size:10px}
+.modal-card{border-radius:18px!important}
+/* cleaner mobile terminal */
+@media(max-width:1100px){
+  .app{grid-template-columns:184px minmax(0,1fr) 320px}
+  .stats{display:none}.brand{width:184px}.main{grid-template-rows:42px minmax(0,1fr) 78px 240px}
+}
+@media(max-width:900px){
+  html,body{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto}
+  .app{height:auto;min-height:100vh;display:grid;grid-template-columns:1fr;grid-template-rows:58px auto auto;grid-template-areas:'top' 'main' 'right';padding-bottom:66px}
+  .top{position:sticky;top:0;height:58px;padding:0 9px;z-index:50;gap:7px}
+  .brand{width:auto;min-width:0;display:none}.pairbox{min-width:132px;height:40px;padding:0 8px}.coin{width:23px;height:23px}.pair{font-size:11px}.sub{font-size:8px}.price{font-size:12px;white-space:nowrap}.change{font-size:9px;white-space:nowrap}.top-actions{margin-left:auto}.top-actions .iconbtn:nth-of-type(1),.top-actions .iconbtn:nth-of-type(2),.top-actions .iconbtn:nth-of-type(3){display:none}.live{font-size:8px;padding:6px 7px}.iconbtn{width:31px;height:31px}
+  .side{position:fixed;left:8px;right:8px;bottom:8px;height:54px;display:block;padding:5px;border:1px solid #1a3046;border-radius:16px;background:rgba(5,13,22,.94);backdrop-filter:blur(18px);box-shadow:0 14px 45px rgba(0,0,0,.5);z-index:100}
+  .side .brand,.side .promo,.side .version{display:none}.nav{height:100%;margin:0;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;overflow:hidden}.nav a{height:44px;min-width:0;padding:3px 2px;display:flex;flex-direction:column;justify-content:center;gap:1px;border:0;border-radius:11px;font-size:7px;text-align:center}.nav a i{width:auto;font-size:15px;line-height:15px}.nav a.active,.nav a:hover{box-shadow:none;background:#0a1e30;border-color:transparent}
+  .main{height:auto;min-height:0;padding:8px;display:flex;flex-direction:column;gap:8px;overflow:visible}.toolbar{height:40px;flex:none}.tf-focus{display:none}.toolbtn{padding:7px 8px}.chart-panel{height:58vh;min-height:390px;max-height:620px;flex:none;border-radius:14px}.chart-title{font-size:9px;left:10px;top:8px}.signal-tag{display:none}.bottomcards{grid-template-columns:repeat(2,1fr);gap:7px;flex:none}.mini{min-height:68px;padding:9px 10px}.mini .big{font-size:14px}
+  .positions{min-height:330px;display:grid;grid-template-rows:42px 145px 130px;flex:none}.tabs{gap:17px;overflow-x:auto;padding:0 9px}.tabs span{white-space:nowrap;font-size:8px}.table{overflow:auto}.row{min-width:690px}.ordergrid{grid-template-columns:1fr 1fr}.order-actions{grid-column:1/-1}
+  .right{height:auto;padding:0 8px 10px;overflow:visible;border-left:0;background:transparent}.panel{margin-bottom:8px}.right .panel{padding:11px}.right .panel.educate{max-height:none}.scanner{max-height:190px}.journal{max-height:180px;overflow:auto}
+}
+@media(max-width:480px){
+  .pairbox{min-width:124px}.price{font-size:11px}.change{display:none}.chart-panel{height:55vh;min-height:360px}.bottomcards .mini:nth-child(3),.bottomcards .mini:nth-child(4){display:none}.positions{min-height:300px;grid-template-rows:40px 125px 125px}.ordergrid{grid-template-columns:1fr 1fr}.field{min-height:40px}.right .panel:nth-of-type(n+7){display:none}
+}
+
+/* ===== v8.8.1 RESPONSIVE MOBILE OVERRIDE =====
+/* Android browsers can expose a wide desktop CSS viewport even on a phone.
+   Detect touch/coarse-pointer devices so the mobile terminal layout is still used. */
+@media (pointer: coarse){
+  html,body{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto}
+  .app{height:auto;min-height:100vh;display:grid;grid-template-columns:1fr;grid-template-rows:58px auto auto;grid-template-areas:'top' 'main' 'right';padding-bottom:72px}
+  .top{position:sticky;top:0;height:58px;padding:0 9px;z-index:50;gap:7px;overflow:hidden}
+  .brand{display:none}
+  .pairbox{min-width:132px;width:auto;height:40px;padding:0 8px;flex:0 1 auto}
+  .coin{width:23px;height:23px;flex:none}.pair{font-size:11px}.sub{font-size:8px}
+  .price{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:145px}.change{font-size:9px;white-space:nowrap}
+  .stats{display:none}.top-actions{margin-left:auto;gap:5px;flex:none}.top-actions .iconbtn:nth-of-type(1),.top-actions .iconbtn:nth-of-type(2),.top-actions .iconbtn:nth-of-type(3){display:none}
+  .live{font-size:8px;padding:6px 7px}.iconbtn{width:31px;height:31px}
+  .side{position:fixed;left:8px;right:8px;bottom:8px;height:54px;display:block;padding:5px;border:1px solid #1a3046;border-radius:16px;background:rgba(5,13,22,.96);backdrop-filter:blur(18px);box-shadow:0 14px 45px rgba(0,0,0,.5);z-index:100}
+  .side .brand,.side .promo,.side .version{display:none}
+  .nav{height:100%;margin:0;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;overflow:hidden}
+  .nav a{height:44px;min-width:0;padding:3px 2px;display:flex;flex-direction:column;justify-content:center;gap:1px;border:0;border-radius:11px;font-size:7px;text-align:center}
+  .nav a i{width:auto;font-size:15px;line-height:15px}.nav a.active,.nav a:hover{box-shadow:none;background:#0a1e30;border-color:transparent}
+  .main{height:auto;min-height:0;padding:8px;display:flex;flex-direction:column;gap:8px;overflow:visible}
+  .toolbar{height:40px;flex:none;overflow-x:auto;scrollbar-width:none}.toolbar::-webkit-scrollbar{display:none}
+  .tf-focus{display:none}.tf button,.toolbtn{padding:7px 8px;font-size:9px;white-space:nowrap}
+  .chart-panel{width:100%;height:62vh;min-height:430px;max-height:700px;flex:none;border-radius:14px}
+  .chart-title{font-size:9px;left:10px;top:8px;max-width:82%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.signal-tag{display:none}
+  .bottomcards{grid-template-columns:repeat(2,1fr);gap:7px;flex:none}.mini{min-height:64px;padding:9px 10px}.mini .big{font-size:14px}
+  .positions{min-height:310px;display:grid;grid-template-rows:42px 135px 133px;flex:none}.tabs{gap:17px;overflow-x:auto;padding:0 9px}.tabs span{white-space:nowrap;font-size:8px}.table{overflow:auto}.row{min-width:690px}.ordergrid{grid-template-columns:1fr 1fr}.order-actions{grid-column:1/-1}
+  .right{height:auto;padding:0 8px 10px;overflow:visible;border-left:0;background:transparent}.panel{margin-bottom:8px}.right .panel{padding:11px}.right .panel.educate{max-height:none}.scanner{max-height:190px}.journal{max-height:180px;overflow:auto}
+}
+
+
+
+/* ===== v8.9.0 MOBILE SINGLE TRADE BAR ===== */
+@media (pointer: coarse){
+  .positions{grid-template-rows:42px 135px 150px;min-height:327px;overflow:visible}
+  .ordergrid{grid-template-columns:1fr 1fr!important;align-items:stretch}
+  .order-actions{grid-column:1/-1!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;min-height:46px}
+  .order-actions .buy,.order-actions .sell{display:flex!important;align-items:center;justify-content:center;min-height:46px;font-size:13px}
+}
+
+    .live-strip{position:absolute;left:10px;right:10px;bottom:8px;z-index:4;display:flex;gap:8px;align-items:center;flex-wrap:wrap;pointer-events:none;font-size:8px;color:#71859c}.live-strip span{background:rgba(4,12,22,.84);border:1px solid #13283f;border-radius:6px;padding:4px 6px}.live-strip b{color:#d7e6f3;font-weight:700}.sync-badge{color:#f0b63f!important}.sync-badge.ok{color:#00e094!important;border-color:#0d4f3f!important}.sync-badge.bad{color:#ff5574!important;border-color:#5d2433!important}
+    .mobile-livebar{display:none}
+    @media(max-width:900px){html,body{overflow-x:hidden;overflow-y:auto}.app{display:block;min-height:100dvh;height:auto}.top{height:58px;padding:0 7px;gap:7px;position:sticky;top:0}.brand{display:none}.pairbox{min-width:145px;height:42px}.stats{gap:8px;margin-left:auto}.stats .stat:nth-child(2),.stats .stat:nth-child(3),.stats .stat:nth-child(4){display:none}.top-actions{margin-left:0}.top-actions .iconbtn:first-child{display:none}.live{font-size:8px;padding:6px 7px}.side{display:none}.main{height:auto;min-height:0;padding:6px 5px 12px;display:block;overflow:visible}.toolbar{height:auto;min-height:40px;overflow-x:auto;scrollbar-width:none;white-space:nowrap;padding-bottom:4px}.toolbar::-webkit-scrollbar{display:none}.tf{display:flex;gap:5px}.tf button,.toolbtn{flex:none;padding:7px 9px;font-size:9px}.toolbtn#paperBtn{display:none}.chart-panel{height:56dvh;min-height:360px;max-height:620px;border-radius:9px}.chart-title{left:8px;top:7px;font-size:8px;max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.live-strip{left:6px;right:6px;bottom:6px;gap:4px;font-size:7px}.live-strip span{padding:3px 4px}.bottomcards{grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.mini{padding:8px 9px;min-height:55px}.mini .big{font-size:13px}.positions{margin-top:6px;min-height:330px;display:grid;grid-template-rows:40px 138px 145px}.tabs{gap:14px;padding:0 8px;overflow-x:auto}.tabs span{font-size:8px;white-space:nowrap}.table{overflow-x:auto}.row{min-width:690px}.orderbar{padding:8px}.ordergrid{grid-template-columns:1fr 1fr;gap:6px}.order-actions{grid-column:1/-1;display:grid!important;grid-template-columns:1fr 1fr!important;min-height:48px}.order-actions .buy,.order-actions .sell{min-height:48px;font-size:12px}.right{height:auto;padding:0 5px 90px;border:0;background:transparent;overflow:visible}.panel{margin-bottom:6px;padding:9px;border-radius:9px}.panel h3{font-size:10px}.sigrow{padding:7px 0}.sigrow b{font-size:11px}.early-grid,.smart-grid,.confirm-grid{gap:5px}.toast{left:7px;right:7px;bottom:10px;text-align:center}.modal-card{width:94vw}.live-strip .sync-badge{margin-left:auto}.tf-focus{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="brand-mark">♦</div><div>ILHAM NOVANDI<small>AI TRADING SYSTEM</small></div></div>
+    <nav class="nav">
+      <a class="active" href="#"><i>⌂</i>Dashboard</a><a href="#scanner"><i>⌁</i>Trading</a><a href="#scanner"><i>◉</i>Market</a><a href="#signals"><i>✦</i>AI Signals</a><a href="#education"><i>◫</i>Candle Learning</a><a href="#history"><i>◷</i>Riwayat</a><a href="#settings"><i>⚙</i>Pengaturan</a>
+    </nav>
+    <div class="promo"><div class="gem">♦</div><strong>ILHAM NOVANDI</strong><span>Trade Smarter With AI</span></div><div class="version"><span>v8.9.0 UI</span><span class="ticker"><i class="dot"></i> Online</span></div>
+  </aside>
+  <header class="top">
+    <div class="pairbox"><div class="coin">₿</div><div><div class="pair" id="pairLabel">BTCUSDT</div><div class="sub">Perpetual · Binance</div></div><span style="margin-left:auto">⌄</span></div>
+    <div class="price" id="topPrice">Rp 0</div><div class="change" id="topChange">+0.00%</div>
+    <div class="stats"><div class="stat"><span>24h High</span><b id="high24">-</b></div><div class="stat"><span>24h Low</span><b id="low24">-</b></div><div class="stat"><span>24h Vol</span><b id="vol24">-</b></div></div>
+    <div class="top-actions"><span class="live">● LIVE</span><button class="iconbtn" title="Scanner">▥</button><button class="iconbtn">♧</button><button class="iconbtn">⚙</button><button class="iconbtn" id="accountBtn" title="Akun Binance">●</button></div>
+  </header>
+  <main class="main">
+    <div class="toolbar"><div class="tf"><button data-interval="1m">1m</button><button data-interval="5m">5m</button><button class="active" data-interval="15m">15m</button><button data-interval="30m">30m</button><button data-interval="1h">1h</button><button data-interval="4h">4h</button><button data-interval="1d">1D</button></div><span class="tf-focus">15M FOCUS · CONFIRMED CLOSE</span><button class="toolbtn" id="candleBtn">◐</button><button class="toolbtn accent" id="superBtn">Supertrend (B/S)</button><button class="toolbtn" id="trendBtn">Trendline</button><button class="toolbtn" id="fibBtn">Fib</button><button class="toolbtn" id="srBtn">Auto S/R</button><button class="toolbtn" id="emaBtn">EMA 20</button><button class="toolbtn" id="paperBtn">Paper Engine: ON</button></div>
+    <section class="chart-panel" id="chartPanel"><div id="chart"></div><div class="chart-title"><b id="chartPair">BTCUSDT · 15 · Binance</b> <span id="ohlc">C 0</span></div><div class="signal-tag" id="chartSignal">Supertrend (B/S) 10 3 <b style="color:#00df93">BUY</b></div><div class="overlay" id="overlay"></div><div class="chart-popup" id="candlePopup"><div class="popup-head"><b>↑ POTENSI <span id="popupSide">BUY</span></b><span class="popup-close" id="closePopup">×</span></div><div class="kv"><span>Body candle</span><b id="bodyPct">Naik</b><span>Upper wick</span><b id="upperPct">-</b><span>Lower wick</span><b id="lowerPct">-</b><span>Close posisi</span><b id="closePos">-</b></div><p style="font-size:9px;color:#7890a6">Kesimpulan: tekanan pasar dibaca dari body, sumbu, volume, EMA20 dan struktur trend.</p></div></section>
+    <section class="bottomcards"><div class="mini"><div class="label">TREND (SUPERTREND)</div><div class="big" id="trendCard">BUY ↑</div><div class="desc">Harga di atas Supertrend</div></div><div class="mini"><div class="label">CANDLE LIVE</div><div class="big" id="candleCard">BUY 82/100</div><div class="desc" id="candleDesc">Body & close sedang dihitung</div></div><div class="mini"><div class="label">MOMENTUM</div><div class="big" id="momentumCard">BUY 74/100</div><div class="desc">Volume & EMA20</div></div><div class="mini"><div class="label">ARAH SELANJUTNYA</div><div class="big" id="nextCard">BUY</div><div class="desc">Potensi naik, bukan kepastian</div></div></section>
+    <section class="positions" id="history"><div class="tabs"><span class="active">Open Position <b id="openCount">0</b></span><span>Riwayat Trade</span><span>Pending Order</span><span>Saldo</span><span>Statistik</span></div><div class="table"><div class="row head"><span>Asset</span><span>Tipe</span><span>Qty</span><span>Harga Masuk</span><span>Harga Sekarang</span><span>PnL</span><span>ROE</span><span>Status</span></div><div class="row" id="positionRow"><span>—</span><span>—</span><span>—</span><span>—</span><span id="posCurrent">—</span><span>—</span><span>—</span><span>—</span></div></div><div class="orderbar"><div class="ordertabs"><span class="active">Order Manual</span><span>Quick Order</span></div><div class="ordergrid"><div class="field"><label>Harga</label><span id="orderPrice">Rp 0</span></div><div class="field"><label>Qty</label><span id="orderQty">0.007200 BTC</span></div><div class="field"><label>Risk / Trade</label><span>0.50%</span></div><div class="order-actions"><button class="buy" id="buyBtn">BUY / LONG</button><button class="sell" id="sellBtn">SELL / SHORT</button></div></div></div></section>
+  
+  </main>
+  <aside class="right">
+    <section class="panel" id="signals"><div class="section-title"><h3>ANALISIS & SIGNAL</h3><span class="ai">AI</span></div><div class="signal-score"><div><span style="font-size:9px;color:#71839a">FINAL SIGNAL</span><br><b id="finalSignal">BUY</b> <span style="font-size:12px;color:#8295aa" id="score">86/100</span></div><span class="pill">Kuat</span></div><div class="meter"><i id="meter"></i></div><div class="sigrow"><div><span class="name">TREND</span><b id="trendSignal">BUY ↑</b><small>Harga di atas EMA20 / Supertrend.</small></div><span class="pill">Naik</span></div><div class="sigrow"><div><span class="name">CANDLE LIVE</span><b id="liveSignal">BUY 82/100</b><small id="liveSignalDesc">Body + wick + close</small></div><span class="pill">Positif</span></div><div class="sigrow"><div><span class="name">POTENSI SELANJUTNYA</span><b id="nextSignal">BUY</b><small>Berbasis struktur, momentum & volume.</small></div><span class="pill">Likely</span></div></section>
+    <section class="panel early-panel"><div class="section-title"><h3>15M EARLY ENTRY ENGINE</h3><span class="ai">REALTIME</span></div><div class="signal-score"><div><span style="font-size:9px;color:#71839a">EARLY SCORE</span><br><b id="earlyScore">—</b> <span style="font-size:11px;color:#8295aa">/100</span></div><span class="entry-badge" id="earlyState">WATCH</span></div><div class="scorebar"><i id="earlyMeter"></i></div><div class="early-grid"><div class="early-stat"><span>MOMENTUM</span><b id="earlyMomentum">—</b></div><div class="early-stat"><span>VOLUME</span><b id="earlyVolume">—</b></div><div class="early-stat"><span>STRUCTURE</span><b id="earlyStructure">—</b></div><div class="early-stat"><span>BREAKOUT</span><b id="earlyBreakout">—</b></div></div><div class="risk-mini"><div><span>ENTRY</span><b id="earlyEntrySide">WAIT</b></div><div><span>RISK</span><b id="earlyRisk">—</b></div><div><span>R:R</span><b id="earlyRR">—</b></div></div><div class="split-note" id="earlyPlan">WATCH → early 20% · momentum 30% · confirmation 50%. Anti-chase aktif.</div></section>
+    <section class="panel smart-panel"><div class="section-title"><h3>SMART ENTRY WINDOW</h3><span class="stage" id="entryStage">WAIT</span></div><div class="smart-grid"><div class="smart-stat"><span>BEST ENTRY</span><b id="bestEntry">—</b></div><div class="smart-stat"><span>PROFIT OPPORTUNITY</span><b id="profitOpp">—</b></div><div class="smart-stat"><span>MARKET PRESSURE</span><b id="marketPressure">—</b></div><div class="smart-stat"><span>RR POTENTIAL</span><b id="rrPotential">—</b></div></div><div class="entry-window"><i id="entryWindowMeter"></i></div><div class="auto-note" id="entryHint">Menunggu setup 15M. Engine akan mencari entry awal atau pullback tanpa mengejar harga.</div></section>
+    <section class="panel"><div class="section-title"><h3>POSISI SAAT INI</h3><button class="iconbtn" id="closePosition">Tutup</button></div><div class="posbox"><span class="muted">Status</span><b id="posStatus" class="green">● FLAT</b><span class="muted">Harga Masuk</span><b id="posEntry">—</b><span class="muted">Harga Sekarang</span><b id="posNow">—</b><span class="muted">PnL</span><b id="posPnl" class="green">Rp 0</b><span class="muted">ROE</span><b id="posRoe" class="green">0.00%</b></div></section>
+    <section class="panel tf-engine"><div class="section-title"><h3>15M CONFIRMATION ENGINE</h3><span class="pill">LOCKED</span></div><div class="tf-state"><div><span>LIVE CANDLE</span><b id="tfLive">—</b></div><div><span>CONFIRMED</span><b id="tfConfirmed">WAIT CLOSE</b></div><div><span>NEXT BIAS</span><b id="tfNext">—</b></div></div><div class="closebar"><div><span>TIME TO CLOSE</span><b id="tfCountdown">15:00</b></div><div class="close-track"><i id="tfProgress"></i></div></div><div class="confirm-grid"><div><span>EMA20</span><b id="tfEma">—</b></div><div><span>STRUCTURE</span><b id="tfStructure">—</b></div><div><span>WICK</span><b id="tfWick">—</b></div><div><span>VOLUME</span><b id="tfVolume">—</b></div></div><div class="auto-note">15M tetap menjadi timeframe tunggal. Early Entry membaca candle yang sedang berjalan; candle close menjadi validasi. Engine boleh masuk sebelum close jika score/risk memenuhi syarat.</div></div>
+    <section class="panel"><div class="section-title"><h3>RISK ENGINE</h3><span class="switch"></span></div><div class="controls"><select class="select" id="riskMode"><option>Candle Live + Trend + EMA20</option><option>Breakout + Volume</option><option>Range + Major Trend</option></select><div class="field"><label>Batas Loss per Trade</label><b>0.50% saldo</b></div><div class="field"><label>Stop Loss</label><b id="slValue">—</b></div><div class="field"><label>Take Profit / Trailing</label><b id="tpValue">—</b></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><button class="trade-btn" id="beBtn">SL PLUS · BREAK EVEN</button><button class="trade-btn" id="trailBtn">TRAILING STOP</button></div><button class="trade-btn" id="panicBtn">TUTUP POSISI SEKARANG</button><div class="auto-note">Risk engine: batas loss, SL/TP, SL Plus (BE + buffer), trailing stop, position sizing. Paper Engine dapat auto-switch + auto-entry; Live tetap manual dan dikunci server.</div></div></section>
+    <section class="panel" id="scanner"><div class="section-title"><h3>PAPER ENGINE · SCANNER</h3><span class="pill">AUTO</span></div><div class="scanner" id="scannerList"><div class="scanrow"><span>Memuat pair...</span><span>—</span><span>—</span></div></div><div class="auto-note" style="margin-top:8px">Memilih kandidat berdasarkan momentum, EMA20, candle structure, volume dan range. Auto-switch hanya pada mode paper.</div></section>
+    <section class="panel"><div class="section-title"><h3>TRADE JOURNAL</h3><span class="pill" id="journalStats">0 trades</span></div><div class="journal" id="journalList"><div class="journal-row"><b>Belum ada trade</b><span>—</span><span>—</span><span>—</span></div></div></section>
+    <section class="panel"><div class="section-title"><h3>15M QUICK BACKTEST</h3><button class="mini-btn" id="backtestBtn">TEST 200 CANDLE</button></div><div class="backtest-result" id="backtestResult">Jalankan Paper Backtest untuk melihat win rate, profit factor, drawdown dan consecutive loss. Ini simulasi edukasi, bukan jaminan hasil live.</div></section>
+    <section class="panel educate" id="education"><div class="section-title"><h3>TRADING PLAYBOOK</h3><span class="ai">EDU</span></div>
+      <div class="lesson"><b>SL Plus · Break Even</b><span>Setelah profit mencapai trigger, pindahkan SL ke BE + buffer untuk mengamankan modal.</span></div>
+      <div class="lesson"><b>Bedah Setup Breakout</b><span>Validasi breakout dengan close candle, volume, retest, EMA20 dan struktur major trend.</span></div>
+      <div class="lesson"><b>Short Top Gainers · Long Top Losers</b><span>Scanner kontrarian untuk watchlist, bukan sinyal otomatis tanpa konfirmasi.</span></div>
+      <div class="lesson"><b>Limit Order · “Pasukan Pucuk”</b><span>Uji entry bertingkat di area support/resistance dan ukur fill rate serta slippage.</span></div>
+      <div class="lesson"><b>Stop Order / Konfirmasi Candlestick</b><span>Gunakan close candle untuk mengurangi false breakout; jangan mengejar wick.</span></div>
+      <div class="lesson"><b>Backtest & Consecutive Loss</b><span>Evaluasi sample yang cukup lintas kondisi market, lalu catat max losing streak dan drawdown.</span></div>
+      <div class="lesson"><b>Range vs Major Trend</b><span>Range: mean reversion di batas. Trend: ikut arah, tunggu pullback dan gunakan trailing.</span></div>
+      <div class="lesson"><b>Risk per Trade · Lot · TP · Trailing</b><span>Hitung ukuran posisi dari jarak SL, lalu bagi entry menjadi beberapa lot bila perlu.</span></div>
+      <div class="lesson"><b>Spot 60% BTC · 40% Altcoins</b><span>Contoh edukasi alokasi, bukan rekomendasi personal. Futures memiliki risiko likuidasi.</span></div>
+      <div class="lesson"><b>Trading Checklist & Survivorship Bias</b><span>Jangan hanya melihat pair yang berhasil. Sertakan losing trades, biaya, slippage dan kondisi sideways.</span></div>
+    </section>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="modal-card"><h2>Binance Account · ILHAM NOVANDI</h2><div class="account-status" id="accountStatus">Memeriksa koneksi backend...</div><div class="account-grid"><div class="account-stat"><span>Wallet Balance</span><b id="accountWallet">—</b></div><div class="account-stat"><span>Available Balance</span><b id="accountAvailable">—</b></div><div class="account-stat"><span>Margin Balance</span><b id="accountMargin">—</b></div><div class="account-stat"><span>Unrealized PnL</span><b id="accountPnl">—</b></div></div><p>API key dan secret disimpan sebagai <b>Vercel Environment Variables</b>, bukan di browser. Mode Paper tetap default.</p><p class="danger-note">Live trading hanya boleh diaktifkan setelah pengujian. Tetapkan MAX_NOTIONAL_USDT dan gunakan API key tanpa permission withdrawal. Trading futures dapat menyebabkan kerugian besar.</p><div class="modal-actions"><button id="modalClose">Tutup</button><button class="ok" id="paperOk">Gunakan Paper Mode</button><button class="live-mode" id="liveOk">Aktifkan Live Mode</button></div></div></div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmtIDR = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n || 0);
+  const fmtPx = n => Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const intervalSeconds = i => ({'1m':60,'3m':180,'5m':300,'15m':900,'30m':1800,'1h':3600,'2h':7200,'4h':14400,'6h':21600,'8h':28800,'12h':43200,'1d':86400})[i]||900;
+  const state = {symbol:'BTCUSDT', interval:'15m', confirmedSide:'WAIT', lastClosedTime:0, price:0, high:0, low:0, vol:0, candles:[], ema20:[], position:null, paper:true, lastTicker:null, ws:null, scannerTimer:null, earlyScore:0, earlySide:'WAIT', lastEarlyCandle:0, earlyEntryUsed:false, cooldownUntil:0, journal:[], dailyLoss:0, consecutiveLoss:0, bid:0, ask:0, mark:0, lastTrade:0, wsLastAt:0, userWs:null, userListenKey:null, account:null};
+  let currentData = [];
+  let emaData = [];
+  const chartHost = $('chart');
+  const canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-label','BTCUSDT 15M candlestick chart');
+  canvas.style.width='100%'; canvas.style.height='100%'; canvas.style.display='block';
+  chartHost.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  function resizeChartCanvas(){
+    const r=chartHost.getBoundingClientRect(), dpr=Math.max(1,window.devicePixelRatio||1);
+    canvas.width=Math.max(1,Math.floor(r.width*dpr)); canvas.height=Math.max(1,Math.floor(r.height*dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0); drawChart();
+  }
+  function calcSupertrend(data, period=10, multiplier=3){
+    if(!data.length) return [];
+    const tr=data.map((c,i)=>i===0?c.high-c.low:Math.max(c.high-c.low,Math.abs(c.high-data[i-1].close),Math.abs(c.low-data[i-1].close)));
+    const atr=[]; for(let i=0;i<data.length;i++){const a=tr.slice(Math.max(0,i-period+1),i+1);atr.push(a.reduce((x,y)=>x+y,0)/a.length)}
+    const upper=[],lower=[],st=[],dir=[];
+    for(let i=0;i<data.length;i++){
+      const mid=(data[i].high+data[i].low)/2, bu=mid+multiplier*atr[i], bl=mid-multiplier*atr[i];
+      upper[i]=i?Math.min(bu,upper[i-1]):bu; lower[i]=i?Math.max(bl,lower[i-1]):bl;
+      if(i===0){dir[i]=data[i].close>=mid?1:-1;st[i]=dir[i]>0?lower[i]:upper[i];continue}
+      dir[i]=data[i].close>upper[i-1]?1:data[i].close<lower[i-1]?-1:dir[i-1];
+      st[i]=dir[i]>0?lower[i]:upper[i];
+    }
+    return data.map((c,i)=>({value:st[i],dir:dir[i]}));
+  }
+  function drawChart(){
+    const w=chartHost.clientWidth,h=chartHost.clientHeight; if(!w||!h)return;
+    ctx.clearRect(0,0,w,h); ctx.fillStyle='#040b14'; ctx.fillRect(0,0,w,h);
+    const data=currentData.slice(-70); if(!data.length){ctx.fillStyle='#6d8199';ctx.font='12px system-ui';ctx.fillText('Menunggu data Binance Futures…',20,40);return;}
+    const pad={l:62,r:18,t:28,b:26}, cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+    let min=Math.min(...data.map(x=>x.low)), max=Math.max(...data.map(x=>x.high));
+    const span=Math.max(max-min,1e-9), extra=span*.08; min-=extra; max+=extra;
+    const y=v=>pad.t+(max-v)/(max-min)*ch, x=i=>pad.l+(i+.5)*cw/data.length;
+    ctx.strokeStyle='#0a1726';ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){const yy=pad.t+i*ch/5;ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();}
+    for(let i=0;i<=6;i++){const xx=pad.l+i*cw/6;ctx.beginPath();ctx.moveTo(xx,pad.t);ctx.lineTo(xx,pad.t+ch);ctx.stroke();}
+    const step=cw/data.length, bodyW=Math.max(3,Math.min(11,step*.58));
+    data.forEach((c,i)=>{const xx=x(i),yo=y(c.open),yc=y(c.close),yh=y(c.high),yl=y(c.low),up=c.close>=c.open;ctx.strokeStyle=up?'#00d79a':'#ff4f72';ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(xx,yh);ctx.lineTo(xx,yl);ctx.stroke();const top=Math.min(yo,yc),bh=Math.max(2,Math.abs(yc-yo));ctx.fillRect(xx-bodyW/2,top,bodyW,bh);});
+    const st=calcSupertrend(data,10,3);
+    ctx.lineWidth=2.2;
+    for(let i=1;i<st.length;i++){if(st[i-1].dir!==st[i].dir)continue;ctx.strokeStyle=st[i].dir>0?'#00d79a':'#ff4f72';ctx.beginPath();ctx.moveTo(x(i-1),y(st[i-1].value));ctx.lineTo(x(i),y(st[i].value));ctx.stroke();}
+    ctx.lineWidth=2; if(emaData.length){const visible=emaData.slice(-data.length);ctx.strokeStyle='#eab84a';ctx.beginPath();visible.forEach((v,i)=>{const xx=x(i),yy=y(v);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)});ctx.stroke();}
+    for(let i=2;i<data.length-2;i++){
+      const isH=data[i].high>data[i-1].high&&data[i].high>=data[i+1].high&&data[i].high>=data[i-2].high&&data[i].high>=data[i+2].high;
+      const isL=data[i].low<data[i-1].low&&data[i].low<=data[i+1].low&&data[i].low<=data[i-2].low&&data[i].low<=data[i+2].low;
+      if(isH){ctx.fillStyle='#f0c05a';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText('H',x(i),Math.max(12,y(data[i].high)-8));}
+      if(isL){ctx.fillStyle='#63d8b3';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText('L',x(i),Math.min(h-8,y(data[i].low)+16));}
+    }
+    const last=data[data.length-1],lastY=y(last.close);ctx.setLineDash([4,4]);ctx.strokeStyle='#20d7ff55';ctx.beginPath();ctx.moveTo(pad.l,lastY);ctx.lineTo(pad.l+cw,lastY);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#9eb4c8';ctx.font='10px system-ui';ctx.textAlign='left';for(let i=0;i<=5;i++){const v=max-i*(max-min)/5;ctx.fillText(v.toFixed(v>100?0:2),8,pad.t+i*ch/5+3);}
+    ctx.fillStyle='#6f8399';ctx.fillText('15M · '+data.length+' candles · Binance Futures',pad.l,16);ctx.textAlign='right';ctx.fillStyle='#aab8c6';ctx.fillText('LIVE',w-8,18);
+  }
+  const chart={applyOptions:()=>resizeChartCanvas(),timeScale:()=>({fitContent:()=>drawChart()})};
+  const candleSeries={setData:d=>{currentData=d||[];drawChart()},update:c=>{const i=currentData.findIndex(x=>x.time===c.time);if(i>=0)currentData[i]=c;else currentData.push(c);if(currentData.length>260)currentData.shift();drawChart()}};
+  const emaSeries={setData:d=>{emaData=(d||[]).map(x=>x.value);drawChart()},update:x=>{if(emaData.length)emaData[emaData.length-1]=x.value;drawChart()}};
+  resizeChartCanvas();
+  const toast = msg => { $('toast').textContent=msg; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'),2200); };
+  let binanceConfig=null;
+  const getBinanceConfig = async () => {
+    if(binanceConfig) return binanceConfig;
+    try {
+      const r=await fetch('/api/binance?action=config',{cache:'no-store'});
+      const d=await r.json();
+      if(d?.ok) binanceConfig=d;
+    } catch(e) { console.warn('Binance config unavailable:',e.message); }
+    return binanceConfig || {marketWsUrl:'wss://fstream.binance.com/market', wsUrl:'wss://fstream.binance.com'};
+  };
+  const api = async (path) => {
+    const r=await fetch('/api/binance?'+new URLSearchParams({action:'proxy',path}),{cache:'no-store'});
+    const data=await r.json().catch(()=>({error:'Binance response tidak valid'}));
+    if(!r.ok || data?.ok===false) throw new Error(data?.error || ('Binance HTTP '+r.status));
+    return data?.data ?? data;
+  };
+  const neonApi = async (symbol=state.symbol, interval='15m', limit=260) => {
+    const q='symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(interval)+'&limit='+limit;
+    const r=await fetch('/api/candles?action=latest&'+q,{cache:'no-store'});
+    const data=await r.json().catch(()=>({error:'Neon response tidak valid'}));
+    if(!r.ok || !data.ok) throw new Error(data.error || ('Neon HTTP '+r.status));
+    return data;
+  };
+  const saveNeonCandles = async (symbol, interval, candles) => {
+    if(!candles?.length)return;
+    try {
+      await fetch('/api/candles?action=upsert&symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(interval),{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({candles})
+      });
+    } catch(e) { console.warn('Neon candle save failed:',e.message); }
+  };
+  const normalizeKlines = (rows, limit=260) => {
+    const map=new Map();
+    for(const k of (rows||[])){
+      if(!Array.isArray(k)||k.length<6) continue;
+      const t=Number(k[0]); const o=Number(k[1]),h=Number(k[2]),l=Number(k[3]),c=Number(k[4]),v=Number(k[5]);
+      if(Number.isFinite(t)&&t>0&&[o,h,l,c,v].every(Number.isFinite)) map.set(t,[t,o,h,l,c,v,k[6]]);
+    }
+    return [...map.values()].sort((a,b)=>a[0]-b[0]).slice(-limit);
+  };
+  const marketApi = async (symbol=state.symbol, interval='15m', limit=260) => {
+    const q='symbol='+encodeURIComponent(symbol)+'&interval='+encodeURIComponent(interval)+'&limit='+limit;
+    let neonCandles=[];
+    // Neon is the chart database. Use it immediately when it already has a
+    // useful history; otherwise bootstrap it from Binance Futures archive/REST.
+    try {
+      const db=await neonApi(symbol,interval,limit);
+      neonCandles=Array.isArray(db.candles)?db.candles:[];
+      if(neonCandles.length>=Math.min(limit,200)) {
+        const klines=normalizeKlines(neonCandles.map(c=>[Number(c.time)*1000,c.open,c.high,c.low,c.close,c.volume]),limit);
+        const last=neonCandles.at(-1);
+        let ticker={lastPrice:last.close,highPrice:last.high,lowPrice:last.low,volume:last.volume,priceChangePercent:'0'};
+        try {
+          const live=await fetch('/api/binance?action=market24&symbol='+encodeURIComponent(symbol),{cache:'no-store'});
+          if(live.ok){const d=await live.json(); if(d?.ticker) ticker=d.ticker;}
+        } catch(e) { console.warn('Live Binance ticker unavailable; using Neon last candle:',e.message); }
+        return {symbol,interval,klines,ticker,source:'neon-postgres'};
+      }
+    } catch(e) { console.warn('Neon read failed:',e.message); }
+
+    // Binance Futures is the ONLY market-data source. History is attempted
+    // through the official Binance Futures archive first so a REST 451 cannot
+    // consume the entire Vercel function timeout.
+    try {
+      const r=await fetch('/api/binance?action=history&'+q,{cache:'no-store'});
+      const data=await r.json().catch(()=>({error:'Binance response tidak valid'}));
+      if(r.ok && data.ok && Array.isArray(data.klines) && data.klines.length) {
+        const klines=data.klines;
+        const candles=klines.map(k=>({time:Number(k[0])/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5],closed:Number(k[6])<=Date.now()}));
+        await saveNeonCandles(symbol,interval,candles);
+        return {symbol,interval,klines,ticker:data.ticker||null,source:data.source||'binance-futures-seed-neon'};
+      }
+      console.warn('Binance archive history failed:',data.error||('HTTP '+r.status));
+    } catch(e) { console.warn('Binance archive history failed:',e.message); }
+
+    // REST is a secondary Binance Futures fallback.
+    try {
+      const r=await fetch('/api/binance?action=market&'+q,{cache:'no-store'});
+      const data=await r.json().catch(()=>({error:'Binance response tidak valid'}));
+      if(r.ok && data.ok && Array.isArray(data.klines) && data.klines.length){
+        const klines=normalizeKlines(data.klines,limit);
+        const candles=klines.map(k=>({time:Number(k[0])/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5],closed:Number(k[6])<=Date.now()}));
+        await saveNeonCandles(symbol,interval,candles);
+        return {symbol,interval,klines,ticker:data.ticker||null,source:data.source||'binance-futures-rest-neon'};
+      }
+    } catch(e) { console.warn('Binance REST history failed:',e.message); }
+
+    // If bootstrap is unavailable, do NOT kill the chart. A live Binance
+    // WebSocket may already be filling Neon/currentData independently.
+    if(neonCandles.length) {
+      const klines=normalizeKlines(neonCandles.map(c=>[Number(c.time)*1000,c.open,c.high,c.low,c.close,c.volume]),limit);
+      const last=neonCandles.at(-1);
+      return {symbol,interval,klines,ticker:{lastPrice:last.close,highPrice:last.high,lowPrice:last.low,volume:last.volume,priceChangePercent:'0'},source:'neon-postgres-partial'};
+    }
+    throw new Error('Belum ada candle Binance Futures di Neon dan history Binance tidak dapat diambil. WebSocket tetap dijalankan untuk data realtime.');
+  };
+  const market24 = async (symbol='BTCUSDT') => { const r=await fetch('/api/binance?action=market24&symbol='+encodeURIComponent(symbol),{cache:'no-store'}); const data=await r.json().catch(()=>({error:'Ticker response tidak valid'})); if(!r.ok || !data.ok) throw new Error(data.error||'Ticker proxy error'); return data.ticker || data; };
+  let pollTimer=null, realtimeConnected=false, lastWsCandle=null;
+  const calcEMA=(arr,p=20)=>{let k=2/(p+1),e=arr[0]||0;return arr.map((v,i)=>{if(i===0)e=v;else e=v*k+e*(1-k);return e})};
+  function earlyScoreFor(data){
+    if(!data || data.length<22) return {score:0,side:'WAIT',momentum:0,volume:0,structure:'WAIT',breakout:'WAIT',risk:0,rr:0,ema:0};
+    const c=data.at(-1), prev=data.at(-2), pprev=data.at(-3);
+    const emaArr=calcEMA(data.map(x=>x.close)); const ema=emaArr.at(-1);
+    const range=Math.max(c.high-c.low,1e-12), body=Math.abs(c.close-c.open), bodyPct=body/range*100;
+    const bullish=c.close>=c.open, above=c.close>=ema;
+    const avgVol=data.slice(-21,-1).reduce((a,x)=>a+x.volume,0)/20; const volRatio=avgVol?c.volume/avgVol:1;
+    const momentumRaw=((c.close-prev.close)/Math.max(prev.close,1e-12))*10000;
+    const momentum=Math.max(0,Math.min(100,50+momentumRaw*1.8+(bodyPct-50)*0.22));
+    const breakoutUp=c.close>Math.max(prev.high,pprev.high), breakoutDn=c.close<Math.min(prev.low,pprev.low);
+    const structure=breakoutUp?'HH/BREAK ↑':breakoutDn?'LL/BREAK ↓':c.close>prev.close?'HH/HL':'LH/LL';
+    const breakout=breakoutUp||breakoutDn?(bullish===breakoutUp?'VALID':'MIXED'):'NONE';
+    const wickLow=(Math.min(c.open,c.close)-c.low)/range*100, wickHigh=(c.high-Math.max(c.open,c.close))/range*100;
+    const rejectionUp=wickLow>35 && c.close>c.open, rejectionDn=wickHigh>35 && c.close<c.open;
+    let score=20; score+=above===bullish?20:8; score+=Math.min(20,Math.round(Math.abs(momentum-50)*0.7)); score+=volRatio>=1.5?18:volRatio>=1.15?12:volRatio>=.9?7:2; score+=breakoutUp||breakoutDn?15:(rejectionUp||rejectionDn?9:4); score+=bodyPct>=55?10:bodyPct>=35?6:2;
+    const side=score>=55?(bullish||breakoutUp||rejectionUp?'BUY':'SELL'):'WAIT';
+    const slDist=Math.max(range*1.15, c.close*0.0025); const tpDist=Math.max(slDist*1.8,c.close*0.0045);
+    const rr=tpDist/slDist; const risk=Math.min(100,Math.round((slDist/c.close)*10000));
+    return {score:Math.max(0,Math.min(100,Math.round(score))),side,momentum:Math.round(momentum),volume:volRatio,structure,breakout,risk,rr,ema,rejectionUp,rejectionDn,slDist,tpDist};
+  }
+  function updateEarlyUI(x){
+    state.earlyScore=x.score; state.earlySide=x.side;
+    $('earlyScore').textContent=x.score; $('earlyMeter').style.width=x.score+'%';
+    const stateText=x.score>=90?'EXTREME':x.score>=80?'STRONG':x.score>=70?'EARLY':'WATCH';
+    $('earlyState').textContent=stateText; $('earlyState').className='entry-badge '+(x.score>=80?'strong':x.score>=70?'warn':'');
+    $('earlyEntrySide').textContent=x.side==='WAIT'?'WAIT':x.side; $('earlyEntrySide').className=x.side==='BUY'?'green':x.side==='SELL'?'red':'';
+    $('earlyMomentum').textContent=x.momentum+'/100'; $('earlyVolume').textContent=x.volume.toFixed(2)+'x'; $('earlyStructure').textContent=x.structure; $('earlyBreakout').textContent=x.breakout;
+    $('earlyRisk').textContent=x.risk?x.risk+' bp':'—'; $('earlyRR').textContent=x.rr?x.rr.toFixed(1)+'R':'—';
+    $('earlyPlan').textContent=x.score>=90?'STRONG: 20% early + 30% momentum + 50% confirmation. Jangan chase jika jarak dari EMA melebar.':x.score>=80?'EARLY: 30% awal, tambah hanya jika momentum tetap sehat.':x.score>=70?'WATCH/EARLY: 20% awal jika RR layak; jangan tambah bila momentum gagal.':'WAIT: tidak cukup kuat untuk entry otomatis.';
+  }
+  function entryPlan(x){
+    const c=currentData.at(-1); if(!c)return {stage:'WAIT',low:0,high:0,opp:0,pressure:50,rr:x.rr||0};
+    const ema=state.ema20.at(-1)||c.close; const range=Math.max(c.high-c.low,1e-9);
+    const pressure=Math.max(0,Math.min(100,50+(x.momentum-50)*0.65+(x.volume-1)*18+(x.side==='BUY'?(c.close>=ema?12:-8):(c.close<ema?12:-8))));
+    const dist=Math.abs(c.close-ema)/c.close*100; const chase=dist>1.8 || x.rr<1.5;
+    const pullbackLow=x.side==='BUY'?Math.max(ema,c.close-range*0.35):c.close-range*0.65;
+    const pullbackHigh=x.side==='BUY'?c.close+range*0.12:Math.min(ema,c.close+range*0.35);
+    const zoneLow=Math.min(pullbackLow,pullbackHigh), zoneHigh=Math.max(pullbackLow,pullbackHigh);
+    const inside=c.close>=zoneLow&&c.close<=zoneHigh;
+    let stage='WATCH'; if(x.score>=90&&!chase)stage='STRONG'; else if(x.score>=80&&!chase)stage='EARLY'; else if(x.score>=70)stage='WATCH'; if(chase)stage='PULLBACK';
+    const opp=Math.max(0,Math.min(100,Math.round(x.score*0.72+Math.min(20,x.rr*7)+Math.max(0,pressure-50)*0.18)));
+    return {stage,zoneLow,zoneHigh,opp,pressure,rr:x.rr||0,chase,inside};
+  }
+  function updateSmartUI(x){
+    const p=entryPlan(x); $('entryStage').textContent=p.stage; $('entryStage').className='stage '+(p.stage==='PULLBACK'?'warn':p.opp>=80?'good':'');
+    $('bestEntry').textContent=p.stage==='PULLBACK'?fmtIDR(((p.zoneLow+p.zoneHigh)/2)*1000000):fmtIDR(state.price*1000000);
+    $('profitOpp').textContent=p.opp+'/100'; $('marketPressure').textContent=(p.pressure>=60?'BUY ':p.pressure<=40?'SELL ':'NEUTRAL ')+Math.round(p.pressure); $('rrPotential').textContent=p.rr.toFixed(1)+'R'; $('entryWindowMeter').style.width=p.opp+'%';
+    $('entryHint').textContent=p.stage==='PULLBACK'?'Breakout sudah terlalu jauh. Tunggu pullback/retest ke zona entry.':p.chase?'Harga terlalu jauh dari EMA20 atau RR mengecil. Jangan chase.':p.opp>=80?'Peluang masih menarik. Early entry boleh dilakukan dengan exposure terbatas.':'Menunggu momentum/volume/struktur lebih selaras.';
+  }
+  function journalAdd(side,entry,exit,pnl,score,reason){
+    state.journal.unshift({time:new Date().toLocaleTimeString('id-ID'),symbol:state.symbol,side,entry,exit,pnl,score,reason}); state.journal=state.journal.slice(0,30);
+    const wins=state.journal.filter(x=>x.pnl>0).length, total=state.journal.length; $('journalStats').textContent=total+' trades · '+(total?Math.round(wins/total*100):0)+'% win'; $('journalList').innerHTML=state.journal.map(x=>'<div class="journal-row"><b>'+x.symbol+' '+x.side+'</b><span class="'+(x.pnl>=0?'good':'danger')+'">'+(x.pnl>=0?'+':'')+fmtIDR(x.pnl)+'</span><span>'+x.score+'/100</span><span>'+x.reason+'</span></div>').join('');
+  }
+  function maybePaperEarly(x){
+    if(!state.paper || state.position || !state.price || Date.now()<state.cooldownUntil || x.score<70 || x.side==='WAIT') return;
+    const plan=entryPlan(x); if(plan.chase){return;} if(x.rr<1.5)return;
+    const c=currentData.at(-1); if(state.lastEarlyCandle===c.time)return; state.lastEarlyCandle=c.time; state.earlyEntryUsed=true;
+    const pct=x.score>=90?0.30:x.score>=80?0.30:0.20; openPosition(x.side,true,pct,x);
+  }
+  const analyze = () => {
+    if(!currentData.length)return;
+    const c=currentData[currentData.length-1], prev=currentData[Math.max(0,currentData.length-2)], ema=state.ema20[state.ema20.length-1]||c.close;
+    const range=Math.max(c.high-c.low,1), body=Math.abs(c.close-c.open), bodyPct=Math.round(body/range*100), upper=Math.max(0,c.high-Math.max(c.open,c.close))/range*100, lower=Math.max(0,Math.min(c.open,c.close)-c.low)/range*100;
+    const closed=currentData.length>1?currentData[currentData.length-2]:c, closedPrev=currentData.length>2?currentData[currentData.length-3]:closed;
+    const closedEma=state.ema20.length>1?state.ema20[state.ema20.length-2]:closed.close, closedBull=closed.close>=closed.open;
+    state.confirmedSide=closed.close>=closedEma&&closedBull?'BUY':(closed.close<closedEma&&!closedBull?'SELL':'WAIT');
+    $('tfLive').textContent=c.close>=c.open?'BULLISH ↑':'BEARISH ↓'; $('tfLive').className=c.close>=c.open?'tf-good':'tf-bad';
+    $('tfConfirmed').textContent=state.confirmedSide==='WAIT'?'WAIT / MIXED':state.confirmedSide+' ✓'; $('tfConfirmed').className=state.confirmedSide==='BUY'?'tf-good':state.confirmedSide==='SELL'?'tf-bad':'tf-warn';
+    $('tfNext').textContent=c.close>=ema?'BUY BIAS ↑':'SELL BIAS ↓'; $('tfNext').className=c.close>=ema?'tf-good':'tf-bad';
+    $('tfEma').textContent=c.close>=ema?'ABOVE EMA20':'BELOW EMA20'; $('tfEma').className=c.close>=ema?'tf-good':'tf-bad';
+    const cr=Math.max(closed.high-closed.low,1), cu=(closed.high-Math.max(closed.open,closed.close))/cr*100, cl=(Math.min(closed.open,closed.close)-closed.low)/cr*100;
+    $('tfStructure').textContent=closed.close>closedPrev.high?'BREAK ↑':closed.close<closedPrev.low?'BREAK ↓':closed.close>closedPrev.close?'HH/HL BIAS':'LH/LL BIAS';
+    $('tfWick').textContent=cl>45?'LOWER REJECT':cu>45?'UPPER REJECT':'BALANCED'; $('tfVolume').textContent=closed.volume>=closedPrev.volume?'EXPANDING':'NORMAL';
+    update15mCountdown(c.time);
+    const bullish=c.close>=c.open, above=c.close>=ema, momentum=Math.max(20,Math.min(95,50+(above?18:-18)+(bullish?12:-12)+Math.min(15,bodyPct/6)));
+    const score=Math.round((above?45:20)+(bullish?25:10)+(c.close>=prev.close?15:5)+Math.min(15,bodyPct/7));
+    const side=score>=55?'BUY':'SELL';
+    $('finalSignal').textContent=side; $('score').textContent=score+'/100'; $('meter').style.width=score+'%'; $('trendSignal').textContent=(above?'BUY ↑':'SELL ↓'); $('liveSignal').textContent=side+' '+Math.min(99,Math.max(1,Math.round(score)))+'/100'; $('nextSignal').textContent=side;
+    $('trendCard').textContent=above?'BUY ↑':'SELL ↓'; $('candleCard').textContent=side+' '+score+'/100'; $('candleDesc').textContent=(bullish?'Body naik':'Body turun')+' · upper '+Math.round(upper)+'% · lower '+Math.round(lower)+'%'; $('momentumCard').textContent=(momentum>=55?'BUY ':'SELL ')+Math.round(momentum)+'/100'; $('nextCard').textContent=side;
+    $('bodyPct').textContent=(bullish?'Naik':'Turun')+' ('+bodyPct+'%)'; $('upperPct').textContent=Math.round(upper)+'%'; $('lowerPct').textContent=Math.round(lower)+'%'; $('closePos').textContent=Math.round((c.close-c.low)/range*100)+'%'; $('popupSide').textContent=side;
+    $('chartSignal').innerHTML='Supertrend (B/S) 10 3 <b style="color:'+(side==='BUY'?'#00df93':'#ff4d6b')+'">'+side+'</b>'; $('ohlc').textContent='O '+fmtIDR(c.open*1000000)+' H '+fmtIDR(c.high*1000000)+' L '+fmtIDR(c.low*1000000)+' C '+fmtIDR(c.close*1000000);
+    const early=earlyScoreFor(currentData); updateEarlyUI(early); updateSmartUI(early); if(c.time!==state.lastEarlyCandle && early.score>=70) maybePaperEarly(early);
+    updateRisk(c.close, side);
+  };
+  function updateRisk(p,side){const sl=side==='BUY'?p*.992:p*1.008,tp=side==='BUY'?p*1.016:p*.984;$('slValue').textContent=fmtIDR(sl*1000000);$('tpValue').textContent=fmtIDR(tp*1000000+'');}
+
+  function update15mCountdown(timeSec){const period=intervalSeconds(state.interval), now=Math.floor(Date.now()/1000), start=timeSec||now, elapsed=Math.max(0,now-start)%period, remain=period-elapsed; const mm=String(Math.floor(remain/60)).padStart(2,'0'),ss=String(remain%60).padStart(2,'0'); $('tfCountdown').textContent=mm+':'+ss; $('tfProgress').style.width=((elapsed/900)*100).toFixed(1)+'%';}
+  async function loadSymbol(symbol=state.symbol){ state.interval=state.interval||'15m';
+    try{
+      const m=await marketApi(symbol,state.interval,260); const ks=m.klines, t=m.ticker||{};
+      currentData=normalizeKlines(ks,260).map(k=>({time:k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]})); state.candles=currentData;
+      const last=currentData.at(-1);
+      state.price=Number(t.lastPrice||last?.close||0);state.high=Number(t.highPrice||last?.high||0);state.low=Number(t.lowPrice||last?.low||0);state.vol=Number(t.volume||last?.volume||0);
+      candleSeries.setData(currentData); const ema=calcEMA(currentData.map(x=>x.close));state.ema20=ema;emaSeries.setData(currentData.map((x,i)=>({time:x.time,value:ema[i]}))); chart.timeScale().fitContent(); updateHeader(t); analyze(); renderSR(); renderOverlay();
+      $('ohlc').textContent='O '+fmtIDR(currentData.at(-1).open*16000)+' H '+fmtIDR(currentData.at(-1).high*16000)+' L '+fmtIDR(currentData.at(-1).low*16000)+' C '+fmtIDR(currentData.at(-1).close*16000);
+    }catch(e){
+      $('ohlc').textContent='Binance Futures: '+e.message;
+      $('chartSignal').textContent='BINANCE DATA ERROR';
+      drawChart();
+      toast('Market data gagal: '+e.message);
+      console.warn('loadSymbol failed:',e);
+    }
+  }
+  function updateHeader(t){const last=Number(t.lastPrice||state.price||0);$('pairLabel').textContent=state.symbol;$('chartPair').textContent=state.symbol+' · '+state.interval+' · Binance Futures → Neon · v8.9.0';$('topPrice').textContent=fmtIDR(last*16000);$('topChange').textContent=(+t.priceChangePercent>=0?'+':'')+Number(t.priceChangePercent||0).toFixed(2)+'%';$('high24').textContent=fmtIDR(Number(t.highPrice||state.high||0)*16000);$('low24').textContent=fmtIDR(Number(t.lowPrice||state.low||0)*16000);$('vol24').textContent=Number(t.volume||state.vol||0).toFixed(0)+' '+state.symbol.replace('USDT','');$('orderPrice').textContent=fmtIDR(last*16000);$('posNow').textContent=fmtIDR(last*16000);$('posCurrent').textContent=fmtIDR(last*16000);$('liveLast').textContent=fmtPx(last);$('liveBid').textContent=fmtPx(state.bid||last);$('liveAsk').textContent=fmtPx(state.ask||last);$('liveMark').textContent=fmtPx(state.mark||last);$('liveVol').textContent=Number(state.vol||t.volume||0).toFixed(2);$('liveSync').textContent=realtimeConnected?'LIVE':'FALLBACK';$('liveSync').className='sync-badge '+(realtimeConnected?'ok':'bad')}
+  function renderSR(){const o=$('overlay');o.querySelectorAll('.sr').forEach(x=>x.remove());if(!currentData.length)return;const highs=currentData.slice(-80).map(x=>x.high), lows=currentData.slice(-80).map(x=>x.low);[Math.max(...highs),Math.min(...lows)].forEach((v,i)=>{const d=document.createElement('div');d.className='sr';d.style.position='absolute';d.style.left='0';d.style.right='0';d.style.top=(i?'88%':'13%');d.style.borderTop='1px dashed '+(i?'#00c98a':'#ffb73a');d.style.opacity='.55';d.style.pointerEvents='none';o.appendChild(d)})}
+  function renderOverlay(){const o=$('overlay');o.querySelectorAll('.fibline,.trendline').forEach(x=>x.remove());if(!$('fibBtn').classList.contains('active')&&!$('trendBtn').classList.contains('active'))return;const add=(top,text,color,cls)=>{const d=document.createElement('div');d.className=cls;d.style.position='absolute';d.style.left='10%';d.style.right='8%';d.style.top=top;d.style.borderTop='1px dashed '+color;d.style.color=color;d.style.fontSize='9px';d.style.paddingTop='2px';d.textContent=text;o.appendChild(d)};if($('fibBtn').classList.contains('active')){['0%','23.6%','38.2%','50%','61.8%','78.6%','100%'].forEach((x,i)=>add((18+i*10)+'%',x,'#f4b63e','fibline'))}if($('trendBtn').classList.contains('active'))add('48%','Trendline ↗','#20d7ff','trendline')}
+  function applyRealtimeCandle(c, closed=false){
+    if(!c || !Number.isFinite(c.time)) return;
+    const normalized={time:Number(c.time),open:Number(c.open),high:Number(c.high),low:Number(c.low),close:Number(c.close),volume:Number(c.volume||0),closed:!!closed};
+    const idx=currentData.findIndex(x=>x.time===normalized.time);
+    if(idx>=0) currentData[idx]=normalized; else currentData.push(normalized);
+    currentData.sort((a,b)=>a.time-b.time);
+    if(currentData.length>260) currentData=currentData.slice(-260);
+    state.price=normalized.close; state.candles=currentData; state.ema20=calcEMA(currentData.map(x=>x.close)); state.wsLastAt=Date.now(); lastWsCandle=normalized;
+    candleSeries.setData(currentData);
+    emaSeries.setData(currentData.map((x,i)=>({time:x.time,value:state.ema20[i]})));
+    $('topPrice').textContent=fmtIDR(normalized.close*16000);$('posNow').textContent=fmtIDR(normalized.close*16000);$('posCurrent').textContent=fmtIDR(normalized.close*16000);$('orderPrice').textContent=fmtIDR(normalized.close*16000);$('liveLast').textContent=fmtPx(normalized.close);
+    $('ohlc').textContent='O '+fmtPx(normalized.open)+' H '+fmtPx(normalized.high)+' L '+fmtPx(normalized.low)+' C '+fmtPx(normalized.close);
+    $('liveSync').textContent='LIVE';$('liveSync').className='sync-badge ok';
+    analyze(); renderSR(); if(state.position)updatePosition(); if(closed) toast(state.interval.toUpperCase()+' candle closed · synced');
+  }
+  async function pollMarket(){
+    try{
+      const r=await fetch('/api/binance?action=market24&symbol='+encodeURIComponent(state.symbol),{cache:'no-store'}); const d=await r.json().catch(()=>({}));
+      if(!r.ok||!d.ok||!d.ticker)throw new Error(d.error||('ticker HTTP '+r.status));
+      const t=d.ticker, price=Number(t.lastPrice); if(!Number.isFinite(price))return;
+      state.lastTicker=t; state.price=price; state.high=Number(t.highPrice||state.high); state.low=Number(t.lowPrice||state.low); state.vol=Number(t.volume||state.vol);
+      if(!realtimeConnected){
+        const q=await fetch('/api/binance?action=proxy&path='+encodeURIComponent('/fapi/v1/klines?symbol='+state.symbol+'&interval='+state.interval+'&limit=2'),{cache:'no-store'});
+        const kd=await q.json().catch(()=>({})); if(kd.ok&&Array.isArray(kd.data)&&kd.data.length){const k=kd.data.at(-1);applyRealtimeCandle({time:+k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:price,volume:+k[5]},false);}
+      }
+      updateHeader(t);
+    }catch(e){if(Date.now()-state.wsLastAt>8000){realtimeConnected=false;$('liveSync').textContent='OFFLINE';$('liveSync').className='sync-badge bad'} console.warn('Binance fallback:',e.message)}
+  }
+  function startPolling(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(pollMarket,5000);pollMarket()}
+  async function wsConnect(){
+    if(state.ws)try{state.ws.close()}catch{}; state.interval=state.interval||'15m'; const cfg=await getBinanceConfig();
+    const base=String(cfg.marketWsUrl||'wss://fstream.binance.com/market').replace(/\/$/,''); const sym=state.symbol.toLowerCase();
+    const streams=[sym+'@kline_'+state.interval,sym+'@bookTicker',sym+'@markPrice@1s',sym+'@aggTrade'];
+    const candidates=[base+'/stream?streams='+streams.join('/'),base+'/ws/'+sym+'@kline_'+state.interval,'wss://fstream.binance.com/market/stream?streams='+streams.join('/'),'wss://fstream.binance.com/market/ws/'+sym+'@kline_'+state.interval];
+    let idx=0, got=false, timer=null;
+    const next=()=>{const url=candidates[Math.min(idx,candidates.length-1)];got=false;try{state.ws=new WebSocket(url)}catch{idx++;if(idx<candidates.length)setTimeout(next,500);return}
+      $('liveSync').textContent='CONNECTING';$('liveSync').className='sync-badge';
+      state.ws.onopen=()=>{got=true;realtimeConnected=true;state.wsLastAt=Date.now();toast('Binance Futures market stream LIVE');if(timer)clearTimeout(timer);timer=setTimeout(()=>{if(Date.now()-state.wsLastAt>9000){try{state.ws.close()}catch{}}},10000)};
+      state.ws.onmessage=e=>{try{const raw=JSON.parse(e.data);const m=raw.data||raw;state.wsLastAt=Date.now();realtimeConnected=true;got=true;
+        if(m.e==='kline'){const k=m.k;applyRealtimeCandle({time:+k.t/1000,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v},!!k.x);saveNeonCandles(state.symbol,state.interval,[{time:+k.t/1000,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,closed:!!k.x}])}
+        else if(m.e==='bookTicker'){state.bid=+m.b;state.ask=+m.a;$('liveBid').textContent=fmtPx(state.bid);$('liveAsk').textContent=fmtPx(state.ask)}
+        else if(m.e==='markPriceUpdate'){state.mark=+m.p;$('liveMark').textContent=fmtPx(state.mark)}
+        else if(m.e==='aggTrade'){state.lastTrade=+m.p}
+        $('liveSync').textContent='LIVE';$('liveSync').className='sync-badge ok';
+      }catch(err){console.warn('WS parse:',err.message)}};
+      state.ws.onerror=()=>{realtimeConnected=false};
+      state.ws.onclose=()=>{realtimeConnected=false;if(timer)clearTimeout(timer);if(idx<candidates.length-1){idx++;setTimeout(next,500)}else setTimeout(()=>{idx=0;wsConnect()},2500)};
+    }; next(); startPolling();
+  }
+  async function connectUserStream(){
+    try{const st=await backend('/api/binance?action=status');if(!st.configured)return;const lk=await backend('/api/binance?action=listenkey');state.userListenKey=lk.listenKey;const base=String(lk.privateWsUrl||'wss://fstream.binance.com/private').replace(/\/$/,'');const urls=[base+'/ws/'+encodeURIComponent(lk.listenKey),base+'/ws/'+lk.listenKey,'wss://fstream.binance.com/private/ws/'+lk.listenKey];let n=0;
+      const open=()=>{const u=urls[Math.min(n,urls.length-1)];try{state.userWs=new WebSocket(u)}catch{n++;return setTimeout(open,500)};state.userWs.onopen=()=>toast('Binance Futures account stream LIVE');state.userWs.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.e==='ACCOUNT_UPDATE')applyAccountUpdate(m);else if(m.e==='ORDER_TRADE_UPDATE'){toast('Order update · '+m.o?.X);refreshAccount()}else if(m.e==='listenKeyExpired'){n=0;connectUserStream()}}catch{}};state.userWs.onclose=()=>{setTimeout(()=>{n=0;connectUserStream()},3000)};state.userWs.onerror=()=>{}};open();setInterval(()=>{if(state.userListenKey)fetch('/api/binance?action=keepalive&listenKey='+encodeURIComponent(state.userListenKey),{method:'PUT'}).catch(()=>{})},30*60*1000);
+    }catch(e){console.warn('User stream unavailable:',e.message)}
+  }
+  async function scanner(){try{
+    const data=await market24(); const raw=data.filter(x=>x.symbol.endsWith('USDT')).filter(x=>+x.quoteVolume>10000000).sort((a,b)=>Math.abs(+b.priceChangePercent)-Math.abs(+a.priceChangePercent)).slice(0,8);
+    const scored=await Promise.all(raw.map(async x=>{try{const mk=await marketApi(x.symbol,'15m',40);const d=mk.klines.map(k=>({time:k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]}));const e=earlyScoreFor(d);return {...x,e,rank:e.score+(Math.abs(+x.priceChangePercent)>2?5:0)}}catch{return {...x,e:{score:0,side:'WAIT',momentum:0,volume:0,structure:'ERR',breakout:'—'},rank:0}}}));
+    scored.sort((a,b)=>b.rank-a.rank); $('scannerList').innerHTML=scored.map(x=>'<div class="scanrow"><span class="pairname">'+x.symbol+'<small style="display:block;color:#66798f">'+x.e.side+' '+x.e.score+'/100</small></span><span class="'+(x.e.side==='BUY'?'green':x.e.side==='SELL'?'red':'')+'">'+x.e.momentum+'</span><button data-s="'+x.symbol+'">Open</button></div>').join('');
+    $('scannerList').querySelectorAll('button').forEach(b=>b.onclick=()=>switchSymbol(b.dataset.s));
+    if(state.paper&&!state.position){const candidate=scored[0]; if(candidate&&candidate.e.score>=70&&candidate.symbol!==state.symbol){await switchSymbol(candidate.symbol,true);setTimeout(()=>{if(state.paper&&!state.position&&state.price){const x=earlyScoreFor(currentData);maybePaperEarly(x)}},500)}}
+  }catch(e){console.warn(e)}}
+  function runBacktest(){
+    const data=currentData.slice(-200); if(data.length<40){$('backtestResult').textContent='Data 15M belum cukup untuk backtest.';return;}
+    let wins=0,losses=0,pnl=0,peak=0,maxDD=0,streak=0,maxStreak=0;
+    for(let i=22;i<data.length-1;i++){const x=earlyScoreFor(data.slice(0,i+1)); if(x.score<70||x.side==='WAIT'||x.rr<1.5)continue; const e=data[i].close, dir=x.side==='BUY'?1:-1, sl=x.slDist, tp=x.tpDist; let out=0; for(let j=i+1;j<data.length;j++){const c=data[j];if(dir>0&&c.low<=e-sl){out=-1;break}if(dir<0&&c.high>=e+sl){out=-1;break}if(dir>0&&c.high>=e+tp){out=x.rr;break}if(dir<0&&c.low<=e-tp){out=x.rr;break}} if(!out)continue; pnl+=out; peak=Math.max(peak,pnl); maxDD=Math.max(maxDD,peak-pnl); if(out>0){wins++;streak=0}else{losses++;streak++;maxStreak=Math.max(maxStreak,streak)}}
+    const total=wins+losses, wr=total?wins/total*100:0, pf=losses?((pnl+losses)/losses):0; $('backtestResult').innerHTML='<b>'+total+' trades</b> · Win rate <b>'+wr.toFixed(1)+'%</b> · Net R <b>'+pnl.toFixed(2)+'</b><br>Profit Factor <b>'+pf.toFixed(2)+'</b> · Max DD <b>'+maxDD.toFixed(2)+'R</b> · Max Consecutive Loss <b>'+maxStreak+'</b>'; toast('Backtest 15M selesai');
+  }
+  async function switchSymbol(symbol,auto=false){state.symbol=symbol;$('pairLabel').textContent=symbol;await loadSymbol(symbol);wsConnect();toast((auto?'Paper Engine auto-switch → ':'Pair → ')+symbol)}
+  document.querySelectorAll('.tf button').forEach(b=>b.onclick=async()=>{const iv=b.dataset.interval||b.textContent.toLowerCase();document.querySelectorAll('.tf button').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.interval=iv;await loadSymbol();wsConnect();$('tfLive').textContent=iv.toUpperCase()+' LIVE';toast('Timeframe '+iv.toUpperCase()+' · Binance Futures realtime')});
+$('panicBtn').onclick=closePosition;$('closePopup').onclick=()=>$('candlePopup').classList.remove('show');$('candleBtn').onclick=()=>$('candlePopup').classList.toggle('show');['fibBtn','trendBtn','srBtn','emaBtn','superBtn'].forEach(id=>$(id).onclick=()=>{$(id).classList.toggle('active');if(id==='emaBtn')emaSeries.applyOptions({visible:$(id).classList.contains('active')});if(id==='srBtn')renderSR();else renderOverlay()});$('paperBtn').onclick=()=>{state.paper=!state.paper;$('paperBtn').textContent='Paper Engine: '+(state.paper?'ON':'OFF');toast('Paper Engine '+(state.paper?'aktif':'nonaktif'))};$('modalClose').onclick=()=>$('modal').classList.remove('show');
+  async function backend(path, options={}){
+    const r=await fetch(path,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});
+    const data=await r.json().catch(()=>({error:'Respons server tidak valid'}));
+    if(!r.ok) throw new Error(data.error||'Backend error');
+    return data;
+  }
+  function applyAccountUpdate(m){
+    const a=m.a||{}; if(Array.isArray(a.B)){const usdt=a.B.find(x=>x.a==='USDT');if(usdt){const w=Number(usdt.wb||0);$('accountWallet').textContent=fmtIDR(w*16000);$('accountAvailable').textContent=fmtIDR(Number(usdt.cw||0)*16000)}}
+    if(Array.isArray(a.P)){const pos=a.P.find(x=>x.s===state.symbol && Math.abs(Number(x.pa||0))>0)||a.P.find(x=>x.s===state.symbol);if(pos){state.position={...(state.position||{}),side:Number(pos.pa||0)>0?'BUY':'SELL',entry:Number(pos.ep||0),qty:Math.abs(Number(pos.pa||0))};$('posStatus').textContent=Math.abs(Number(pos.pa||0))>0?'● '+state.position.side:'● FLAT';$('posEntry').textContent=fmtIDR(Number(pos.ep||0)*16000);$('posPnl').textContent=fmtIDR(Number(pos.up||0)*16000);$('posCurrent').textContent=fmtIDR(state.price*16000)}}
+  }
+  async function refreshAccount(){
+    try{const st=await backend('/api/binance?action=status');const status=$('accountStatus');status.textContent=st.configured?(st.liveEnabled?'Binance Futures LIVE backend siap':'Binance Futures terhubung · Live OFF'):'API key belum dikonfigurasi';status.className='account-status '+(st.configured?'ok':'bad');if(st.configured){const a=await backend('/api/binance?action=account&symbol='+encodeURIComponent(state.symbol));state.account=a;applyAccountUpdate({a:{B:[{a:'USDT',wb:a.walletBalance,cw:a.availableBalance}],P:(a.positions||[]).filter(x=>x.symbol===state.symbol).map(x=>({s:x.symbol,pa:x.positionAmt,ep:x.entryPrice,up:x.unRealizedProfit}))}});$('accountMargin').textContent=fmtIDR(Number(a.marginBalance||0)*16000);$('accountPnl').textContent=fmtIDR(Number(a.unrealizedPnl||0)*16000);const pos=a.position||{};if(pos&&Math.abs(Number(pos.positionAmt||0))>0){$('openCount').textContent='1';$('posStatus').textContent='● '+(Number(pos.positionAmt)>0?'BUY':'SELL');$('posEntry').textContent=fmtIDR(Number(pos.entryPrice||0)*16000);$('posCurrent').textContent=fmtIDR(Number(pos.markPrice||state.price)*16000);$('posPnl').textContent=fmtIDR(Number(pos.unRealizedProfit||0)*16000)}else $('openCount').textContent='0'}}catch(e){$('accountStatus').textContent=e.message;$('accountStatus').className='account-status bad'}}
+  async function liveOrder(side){
+    if(state.paper){ openPosition(side); return; }
+    if(!state.price){toast('Harga belum siap');return}
+    const qty=Number(($('orderQty').textContent||'0').replace(/[^0-9.]/g,''))||0.0072;
+    if(!confirm('Kirim MARKET '+side+' '+state.symbol+' ke akun Binance LIVE?')) return;
+    try{
+      const st=await backend('/api/binance?action=status');
+      if(!st.liveEnabled) throw new Error('Live trading masih OFF di Vercel.');
+      const order=await backend('/api/binance?action=bracket',{method:'POST',headers:{'x-live-confirm':'ILHAM-NOVANDI-LIVE'},body:JSON.stringify({symbol:state.symbol,side,quantity,entryPrice:state.price})});
+      toast('LIVE '+side+' + SL/TP aktif · Order '+(order.open?.orderId||'OK')); await refreshAccount();
+    }catch(e){toast('LIVE gagal: '+e.message)}
+  }
+  async function liveClose(){
+    if(state.paper){closePosition();return}
+    if(!confirm('Tutup posisi '+state.symbol+' di Binance LIVE sekarang?'))return;
+    try{const r=await backend('/api/binance?action=close',{method:'POST',headers:{'x-live-confirm':'ILHAM-NOVANDI-LIVE'},body:JSON.stringify({symbol:state.symbol})});toast('LIVE posisi ditutup · Order '+(r.orderId||'OK'));await refreshAccount()}catch(e){toast('LIVE close gagal: '+e.message)}
+  }
+  async function protectLive(mode){
+    if(state.paper){
+      if(!state.position){toast('Paper: tidak ada posisi untuk dilindungi');return}
+      const p=state.position, entry=p.entry, buffer=mode==='breakeven'?0.05:0;
+      if(mode==='breakeven') toast('Paper SL Plus → BE '+(p.side==='BUY'?'↑':'↓')+' dengan buffer 0.05%');
+      else toast('Paper trailing stop aktif · callback 0.5%');
+      return;
+    }
+    if(!state.price){toast('Harga belum siap');return}
+    if(!confirm(mode==='breakeven'?'Pindahkan SL LIVE ke Break Even + 0.05%?':'Aktifkan TRAILING STOP LIVE callback 0.5%?'))return;
+    try{
+      const r=await backend('/api/binance?action=protect',{method:'POST',headers:{'x-live-confirm':'ILHAM-NOVANDI-LIVE'},body:JSON.stringify({symbol:state.symbol,mode,bufferPct:0.05,callbackRate:0.5})});
+      toast(mode==='breakeven'?'LIVE SL Plus aktif':'LIVE trailing stop aktif'); await refreshAccount();
+    }catch(e){toast('Risk action gagal: '+e.message)}
+  }
+  $('buyBtn').onclick=()=>liveOrder('BUY'); $('sellBtn').onclick=()=>liveOrder('SELL'); $('closePosition').onclick=liveClose; $('panicBtn').onclick=liveClose; $('beBtn').onclick=()=>protectLive('breakeven'); $('trailBtn').onclick=()=>protectLive('trailing');
+  $('backtestBtn').onclick=runBacktest;
+  $('accountBtn').onclick=()=>{$('modal').classList.add('show');refreshAccount()};
+  $('liveOk').onclick=async()=>{try{const st=await backend('/api/binance?action=status');if(!st.configured||!st.liveEnabled)throw new Error('Backend live belum diaktifkan.');if(!confirm('Aktifkan LIVE MODE pada browser ini? Order berikutnya dapat menggunakan uang nyata.'))return;state.paper=false;$('paperBtn').textContent='Paper Engine: OFF · LIVE';toast('LIVE MODE aktif');$('modal').classList.remove('show')}catch(e){toast(e.message)}};
+  $('paperOk').onclick=()=>{state.paper=true;$('paperBtn').textContent='Paper Engine: ON';$('modal').classList.remove('show');toast('Paper Mode aktif')};
+
+  $('chartPanel').addEventListener('dblclick',()=>toast('Chart tools: Fib, Trendline, Auto S/R, EMA20 tersedia di toolbar.'));
+  window.addEventListener('resize',resizeChartCanvas);
+  // Binance Futures WebSocket is started independently of historical REST/archive.
+  // This is critical when Binance REST returns HTTP 451 in the deployment region.
+  wsConnect();
+  connectUserStream();
+  loadSymbol().then(()=>{if(lastWsCandle) applyRealtimeCandle(lastWsCandle,false); scanner();setInterval(scanner,30000);setInterval(()=>{if(document.visibilityState==='visible')refreshAccount()},10000)}).catch(e=>console.warn('Initial market load:',e.message));
+})();
+</script>
+</body>
+</html>

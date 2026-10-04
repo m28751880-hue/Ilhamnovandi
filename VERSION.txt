@@ -1,0 +1,1 @@
+v8.9.0 — Binance Futures realtime sync + responsive mobile UI

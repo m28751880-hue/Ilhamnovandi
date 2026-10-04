@@ -1,0 +1,15 @@
+{
+  "name": "ilham-novandi-trading-terminal",
+  "version": "8.7.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "check": "node --check api/binance.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "fflate": "^0.8.2"
+  }
+}
