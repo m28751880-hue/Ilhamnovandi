@@ -12,7 +12,7 @@ const API_SECRET = process.env.BINANCE_API_SECRET || '';
 const LIVE_ENABLED = String(process.env.ENABLE_LIVE_TRADING || 'false').toLowerCase() === 'true';
 const MAX_NOTIONAL = Number(process.env.MAX_NOTIONAL_USDT || 0);
 
-function json(res,status,body){res.status(status).setHeader('Cache-Control','no-store').json(body)}
+function json(res,status,body){res.status(status).setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate').setHeader('Pragma','no-cache').setHeader('Expires','0').json(body)}
 function configured(){return !!API_KEY && !!API_SECRET}
 function signedParams(params={}){
   const p={...params,timestamp:Date.now(),recvWindow:5000};
@@ -50,7 +50,7 @@ async function signedFetch(path,opts={}){return rawFetch(BASE_URL,path,{...opts,
 
 async function handler(req,res){
   const action=String(req.query?.action||'').toLowerCase();
-  if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.2',marketBaseUrl:MARKET_BASE_URL});
+  if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.5',marketBaseUrl:MARKET_BASE_URL});
   if(action==='config'){
     const wsUrl=process.env.BINANCE_WS_URL||'wss://fstream.binance.com';
     const marketWsUrl=process.env.BINANCE_MARKET_WS_URL||'wss://fstream.binance.com';
