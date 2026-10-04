@@ -5,7 +5,8 @@ const BASE_URL = process.env.BINANCE_BASE_URL || 'https://fapi.binance.com';
 const MARKET_BASE_URL = process.env.BINANCE_MARKET_BASE_URL || BASE_URL;
 const MARKET_BASE_URLS = Array.from(new Set([
   MARKET_BASE_URL, BASE_URL,
-  'https://fapi1.binance.com','https://fapi2.binance.com','https://fapi3.binance.com','https://fapi4.binance.com'
+  'https://fapi1.binance.com','https://fapi2.binance.com','https://fapi3.binance.com','https://fapi4.binance.com',
+  'https://fstream.binance.com'
 ]));
 const API_KEY = process.env.BINANCE_API_KEY || '';
 const API_SECRET = process.env.BINANCE_API_SECRET || '';
@@ -42,7 +43,7 @@ async function rawFetch(base,path,{method='GET',params={},signed=false,headers={
 async function marketFetch(path){
   let last;
   for(const base of MARKET_BASE_URLS){
-    try{return await rawFetch(base,path)}catch(e){last=e;if(e.status===451)break}
+    try{return await rawFetch(base,path)}catch(e){last=e;console.warn('Binance market endpoint failed',base,e.status||'',e.message||'');}
   }
   throw last||new Error('Binance Futures market data tidak dapat diakses');
 }
@@ -50,7 +51,7 @@ async function signedFetch(path,opts={}){return rawFetch(BASE_URL,path,{...opts,
 
 async function handler(req,res){
   const action=String(req.query?.action||'').toLowerCase();
-  if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.5',marketBaseUrl:MARKET_BASE_URL});
+  if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.6',marketBaseUrl:MARKET_BASE_URL});
   if(action==='config'){
     const wsUrl=process.env.BINANCE_WS_URL||'wss://fstream.binance.com';
     const marketWsUrl=process.env.BINANCE_MARKET_WS_URL||'wss://fstream.binance.com';
