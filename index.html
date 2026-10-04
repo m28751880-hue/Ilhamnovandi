@@ -220,7 +220,7 @@ body{font-size:13px}
     }
     const last=data[data.length-1],lastY=y(last.close);ctx.setLineDash([4,4]);ctx.strokeStyle='#20d7ff55';ctx.beginPath();ctx.moveTo(pad.l,lastY);ctx.lineTo(pad.l+cw,lastY);ctx.stroke();ctx.setLineDash([]);
     ctx.fillStyle='#9eb4c8';ctx.font='10px system-ui';ctx.textAlign='left';for(let i=0;i<=5;i++){const v=max-i*(max-min)/5;ctx.fillText(v.toFixed(v>100?0:2),8,pad.t+i*ch/5+3);}
-    ctx.fillStyle='#6f8399';ctx.fillText(state.interval.toUpperCase()+' · '+data.length+' candles · BINANCE LIVE v8.9.5',pad.l,16);ctx.textAlign='right';ctx.fillStyle='#aab8c6';ctx.fillText('LIVE',w-8,18);
+    ctx.fillStyle='#6f8399';ctx.fillText(state.interval.toUpperCase()+' · '+data.length+' candles · BINANCE LIVE v8.9.7',pad.l,16);ctx.textAlign='right';ctx.fillStyle='#aab8c6';ctx.fillText('LIVE',w-8,18);
   }
   const chart={applyOptions:()=>resizeChartCanvas(),timeScale:()=>({fitContent:()=>drawChart()})};
   const candleSeries={setData:d=>{currentData=d||[];drawChart()},update:c=>{const i=currentData.findIndex(x=>x.time===c.time);if(i>=0)currentData[i]=c;else currentData.push(c);if(currentData.length>260)currentData.shift();drawChart()}};
@@ -238,7 +238,7 @@ body{font-size:13px}
       const d=await r.json();
       if(d?.ok) binanceConfig=d;
     } catch(e) { console.warn('Binance config unavailable:',e.message); }
-    return binanceConfig || {marketWsUrl:'wss://fstream.binance.com', wsUrl:'wss://fstream.binance.com'};
+    return binanceConfig || {marketWsUrl:'wss://fstream.binance.com/market', wsUrl:'wss://fstream.binance.com'};
   };
   const api = async (path) => {
     const r=await fetch('/api/binance?'+new URLSearchParams({action:'proxy',path}),{cache:'no-store'});
@@ -435,7 +435,7 @@ body{font-size:13px}
   function updateHeader(t){
     const last=Number(t.lastPrice||state.price||0);
     setText('pairLabel',state.symbol);
-    setText('chartPair',state.symbol+' · '+state.interval+' · BINANCE LIVE · v8.9.6');
+    setText('chartPair',state.symbol+' · '+state.interval+' · BINANCE LIVE · v8.9.7');
     setText('topPrice',fmtIDR(last*16000));
     setText('topChange',(Number(t.priceChangePercent||0)>=0?'+':'')+Number(t.priceChangePercent||0).toFixed(2)+'%');
     setText('high24',fmtIDR(Number(t.highPrice||state.high||0)*16000));
@@ -553,7 +553,7 @@ body{font-size:13px}
     // USD-M Futures endpoint. Never prepend /market, /public or /private.
     // Binance documents raw /ws/<stream> and combined /stream?streams=...
     const streams=[symbol+'@kline_'+interval,symbol+'@aggTrade',symbol+'@bookTicker',symbol+'@markPrice@1s'];
-    const url='wss://fstream.binance.com/stream?streams='+streams.join('/');
+    const url='wss://fstream.binance.com/market/stream?streams='+streams.join('/');
     $('liveSync').textContent='CONNECTING'; $('liveSync').className='sync-badge';
     let openedAt=Date.now();
     let lastMessageAt=0;
