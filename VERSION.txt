@@ -1,9 +1,6 @@
-v8.9.2 — Binance Futures Live Chart Sync Fix
-
-- Fixed Binance Futures WebSocket URL construction.
-- Browser chart now receives the official /ws/<stream> kline stream directly.
-- Added automatic reconnect with exponential backoff and stale-stream watchdog.
-- LIVE indicator now reflects the actual WebSocket connection state.
-- Neon writes are throttled to avoid one serverless DB request per tick; closed candles are always persisted.
-- REST remains fallback only when WebSocket is unavailable.
-- Realtime candle updates remain independent from historical bootstrap.
+V8.9.4
+Binance Live Relay + Direct WebSocket fallback
+- Browser polls a Vercel Binance relay every 1 second
+- Direct Binance Futures combined WebSocket remains primary
+- Current 15M candle moves with live Binance price
+- Auto reconnect and REST recovery
