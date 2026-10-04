@@ -51,12 +51,12 @@ async function signedFetch(path,opts={}){return rawFetch(BASE_URL,path,{...opts,
 
 async function handler(req,res){
   const action=String(req.query?.action||'').toLowerCase();
-  if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.6',marketBaseUrl:MARKET_BASE_URL});
+  if(action==='ping')return json(res,200,{ok:true,service:'binance-futures',version:'8.9.7',marketBaseUrl:MARKET_BASE_URL});
   if(action==='config'){
     const wsUrl=process.env.BINANCE_WS_URL||'wss://fstream.binance.com';
-    const marketWsUrl=process.env.BINANCE_MARKET_WS_URL||'wss://fstream.binance.com';
-    const privateWsUrl=process.env.BINANCE_PRIVATE_WS_URL||'wss://fstream.binance.com';
-    return json(res,200,{ok:true,wsUrl,marketWsUrl,publicWsUrl:process.env.BINANCE_PUBLIC_WS_URL||'wss://fstream.binance.com',privateWsUrl,configured:configured(),liveEnabled:LIVE_ENABLED});
+    const marketWsUrl=process.env.BINANCE_MARKET_WS_URL||'wss://fstream.binance.com/market';
+    const privateWsUrl=process.env.BINANCE_PRIVATE_WS_URL||'wss://fstream.binance.com/private';
+    return json(res,200,{ok:true,wsUrl,marketWsUrl,publicWsUrl:process.env.BINANCE_PUBLIC_WS_URL||'wss://fstream.binance.com/market',privateWsUrl,configured:configured(),liveEnabled:LIVE_ENABLED});
   }
   if(action==='status')return json(res,200,{ok:true,configured:configured(),liveEnabled:LIVE_ENABLED,maxNotionalUsdt:MAX_NOTIONAL||null});
   if(action==='proxy'){
@@ -119,7 +119,7 @@ async function handler(req,res){
     if(!configured())return json(res,400,{ok:false,error:'API key Binance Futures belum dikonfigurasi'});
     try{
       const data=await rawFetch(BASE_URL,'/fapi/v1/listenKey',{method:'POST',headers:{'X-MBX-APIKEY':API_KEY}});
-      return json(res,200,{ok:true,listenKey:data.listenKey,privateWsUrl:process.env.BINANCE_PRIVATE_WS_URL||'wss://fstream.binance.com'});
+      return json(res,200,{ok:true,listenKey:data.listenKey,privateWsUrl:process.env.BINANCE_PRIVATE_WS_URL||'wss://fstream.binance.com/private'});
     }catch(e){return json(res,e.status===401?401:502,{ok:false,error:e.message,details:e.details||null})}
   }
   if(action==='keepalive'){
